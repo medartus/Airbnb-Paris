@@ -26,20 +26,3 @@ def OptimizeCalendar(filename):
     return newData
 
 newData = OptimizeCalendar("../datasets/calendar08.csv")
-
-# import mysql.connector
-
-# cnx = mysql.connector.connect(user='user', password='password',
-#                               host='127.0.0.1',
-#                               database='airbnb')
-# cursor = cnx.cursor()
-
-# query = ("SELECT * from plop")
-
-# cursor.execute(query)
-
-# for val in cursor:
-#   print(val)
-
-# cursor.close()
-# cnx.close()
