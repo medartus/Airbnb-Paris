@@ -25,4 +25,5 @@ def OptimizeCalendar(filename):
     
     return newData
 
-newData = OptimizeCalendar("../datasets/calendar08.csv")
+newData = OptimizeCalendar("./datasets/calendar.csv")
+newData.to_csv("./datasets/altered/calendar_periods.csv",index=False)
