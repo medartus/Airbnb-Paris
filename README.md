@@ -5,6 +5,14 @@
 pip install -r requirements.txt
 ```
 
+2. Create a `dev.env` file in the **root folder** with the following content:
+```
+POSTGRESQL_HOST=
+POSTGRESQL_USER=
+POSTGRESQL_PASSWORD=
+POSTGRESQL_DATABASE=
+```
+
 To access and visualize the database, you can use [pgAdmin](https://www.pgadmin.org/download/).
 
 ## Organization of Files and Folders
