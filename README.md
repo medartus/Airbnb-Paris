@@ -18,8 +18,8 @@ To access and visualize the database, you can use [pgAdmin](https://www.pgadmin.
 ## Organization of Files and Folders
 
 - **datasets**: Regroup all datasets files
-  - **datasets/listing**: Regroup listings datasets
-  - **datasets/review**: Regroup reviews datasets
+  - **datasets/listings**: Regroup listings datasets
+  - **datasets/reviews**: Regroup reviews datasets
   - **datasets/calendar**: Regroup calendars datasets
 - **tests**: All the tests files that you have
 
