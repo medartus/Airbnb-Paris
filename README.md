@@ -1,13 +1,10 @@
 # Airbnb - Paris
 ## Getting Started
-1. Install python modules
+1. Install Python modules
 ```
 pip install -r requirements.txt
 ```
-2. Start Mysql database
-```
-docker-compose up
-```
+2. Create the Mysql database and copy the database files. Run the batch file : `CreateDatabase.bat`.
 
 To access and visualize the database, you can use [MySQL Workbench](https://dev.mysql.com/downloads/workbench/).
 
@@ -15,7 +12,7 @@ Database informations :
 - MYSQL_DATABASE: `airbnb`
 - MYSQL_USER: `user`
 - MYSQL_PASSWORD: `password`
-- MYSQL_ROOT_PASSWORD: `password
+- MYSQL_ROOT_PASSWORD: `password`
 
 ## Organization of Files and Folders
 
