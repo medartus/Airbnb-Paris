@@ -2,7 +2,9 @@ import pandas as pd
 import time
 from datetime import timedelta
 
-
+'''
+This function returns the oldest 'end' date of the calendar dataset
+'''
 def get_last_day(calendar):
 
     calendar['end'] = pd.to_datetime(calendar.end)
@@ -11,6 +13,11 @@ def get_last_day(calendar):
 
     return last_day
 
+
+'''
+Thanks to the oldest day from the previous function,
+this function select only the reviews that appeared after this day, cutting all the previous reviews which are not useful.
+'''
 def sort_reviews(reviews, last_day):
 
     reviews["date"] = pd.to_datetime(reviews.date)
@@ -18,15 +25,21 @@ def sort_reviews(reviews, last_day):
     reviews = reviews[reviews.date >= last_day]
 
     return reviews
-        
-        
+
+
+'''
+Given a review, this funtion will search for any period of the calendar the review is possibly a validation of.
+If there is several, it validates the shortest period.
+'''   
 def validate_period(review,calendar):
     try:
+        # Select possible validation regarding several criteras
         validations = calendar.loc[[review.listing_id]]
         # validations = validations[ (validations.validation == False) & (validations.available != 't') & (validations.label != 'MIN') & (validations.label != 'MAX')]
         validations = validations[validations.validation == False]
         validations = validations[ (validations.end <= review.date) & (review.date <= validations.end + timedelta(days=14))]
 
+        # if there is validations, mark the shortest period as validated
         if not validations.empty:
             validated_index = validations.sort_values(by="num_day").index.values
             calendar.at[validated_index, 'validation'] = True
@@ -35,6 +48,11 @@ def validate_period(review,calendar):
         pass
     return calendar
 
+'''
+Given a calendar and reviews dataframes,
+this function will iterate over each interesting review (after sorting)
+to search possible validation from this review and update the result in calendar.
+'''
 def validate(calendar, reviews):
 
     last_day = get_last_day(calendar)
@@ -49,17 +67,21 @@ def validate(calendar, reviews):
 
     return calendar
 
+# open files
 calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
 reviews = pd.read_csv("./datasets/reviews/reviews-2020-09.csv")
 
 start_time = time.time()
 
+# optimize calendar data to process
 reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
 calendar = calendar[(calendar['end'] <= reviews['date'].max())]
 calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
 
+# Execute validation
 validated_calendar = validate(calendar,reviews)
 print("---  %s seconds ---" % (time.time() - start_time))
 
+# Print and save result
 print(validated_calendar[validated_calendar.validation == True])
 validated_calendar[validated_calendar.validation == True].to_csv("./datasets/altered/validated_calendar_periods.csv")
