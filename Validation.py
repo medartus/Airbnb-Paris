@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 from datetime import timedelta
 
 
@@ -17,33 +18,48 @@ def sort_reviews(reviews, last_day):
     reviews = reviews[reviews.date >= last_day]
 
     return reviews
-
+        
+        
 def validate_period(review,calendar):
+    try:
+        validations = calendar.loc[[review.listing_id]]
+        # validations = validations[ (validations.validation == False) & (validations.available != 't') & (validations.label != 'MIN') & (validations.label != 'MAX')]
+        validations = validations[validations.validation == False]
+        validations = validations[ (validations.end <= review.date) & (review.date <= validations.end + timedelta(days=14))]
 
-    validations = calendar[ (calendar.listing_id == review.listing_id) & (calendar.validation == False) & (calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
-    validations = validations[ (validations.end <= review.date) & (review.date <= validations.end + timedelta(days=14))]
-
-    if not validations.empty:
-        validated_index = validations.sort_values(by="num_day")["period_id"].iloc[0]
-        validated_calendar_index = calendar[calendar["period_id"] == validated_index].index[0]
-        calendar.loc[validated_calendar_index,"validation"] = True
+        if not validations.empty:
+            validated_index = validations.sort_values(by="num_day").index.values
+            calendar.at[validated_index, 'validation'] = True
+    except:
+        # print(review.listing_id)
+        pass
     return calendar
 
 def validate(calendar, reviews):
 
     last_day = get_last_day(calendar)
-    print(last_day)
     reviews = sort_reviews(reviews, last_day)
 
     calendar["validation"] = False
 
-    for review in reviews.itertuples(): 
+    calendar = calendar.set_index(['listing_id','period_id'])
+    
+    for review in reviews.sort_values('date', ascending=False).itertuples():
         calendar = validate_period(review,calendar)
 
     return calendar
 
 calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
-reviews = pd.read_csv("./datasets/reviews.csv")
+reviews = pd.read_csv("./datasets/reviews/reviews-2020-09.csv")
+
+start_time = time.time()
+
+reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
+calendar = calendar[(calendar['end'] <= reviews['date'].max())]
+calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
 
 validated_calendar = validate(calendar,reviews)
+print("---  %s seconds ---" % (time.time() - start_time))
+
 print(validated_calendar[validated_calendar.validation == True])
+validated_calendar[validated_calendar.validation == True].to_csv("./datasets/altered/validated_calendar_periods.csv")

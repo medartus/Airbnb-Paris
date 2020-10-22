@@ -11,11 +11,6 @@ def FormatUrl(date,fileName):
     return "http://data.insideairbnb.com/france/ile-de-france/paris/"+date+"/data/"+fileName+".csv.gz"
 
 def DownloadFile(date,fileName):
-    try:
-        os.mkdir('./datasets/'+fileName)
-    except:
-        pass
-    
     date = str(date)
     url = FormatUrl(date,fileName)
 
@@ -39,4 +34,12 @@ def DownloadAllDatesets(startDate):
     for day in range(numberDays.days):
         DownloadDaily(day)
 
-DownloadAllDatesets('2020-01-01')
+def createFolder():
+    for filename in datasets:
+        try:
+            os.mkdir('./datasets/'+fileName)
+        except:
+            pass
+
+createFolder()
+DownloadAllDatesets('2017-01-01')

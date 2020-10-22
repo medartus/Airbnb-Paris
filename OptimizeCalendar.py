@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+import time
 
 def groupDate(group):
-    return [group.iloc[0]['date'], group.iloc[-1]['date'], str(group.iloc[0]['listing_id']),  group.iloc[0]['available'],group.shape[0],  group.iloc[0]['minimum_nights'],  group.iloc[0]['maximum_nights']]
+    return [group.iloc[0]['date'], group.iloc[-1]['date'], group.shape[0],  group.iloc[0]['minimum_nights'],  group.iloc[0]['maximum_nights']]
 
 def OptimizeCalendar(filename):
     calendar = pd.read_csv(filename,sep=",")
@@ -16,14 +17,18 @@ def OptimizeCalendar(filename):
 
     adj_check = (calendar.available != calendar.available.shift()).cumsum()
     newData = pd.DataFrame(calendar.groupby(['listing_id','available',adj_check], as_index=False, sort=False).apply(groupDate))
-    newData[['start','end','listing_id','available','num_day','minimum_nights','maximum_nights']] = pd.DataFrame(newData[0].to_list(), index= newData.index)
+    newData[['start','end','num_day','minimum_nights','maximum_nights']] = pd.DataFrame(newData[0].to_list(), index= newData.index)
     newData["start"] = pd.to_datetime(newData["start"])
     newData["end"] = pd.to_datetime(newData["end"])
     
     del newData[0]
-    newData = newData.reset_index(drop=True)
+    newData.index = newData.index.set_names(['listing_id', 'available','foo'])
+    newData = newData.reset_index()
+    del newData['foo']
     
     return newData
 
-newData = OptimizeCalendar("./datasets/calendar.csv")
+start_time = time.time()
+newData = OptimizeCalendar("./datasets/calendar/calendar-2020-08.csv")
+print("---  %s seconds ---" % (time.time() - start_time))
 newData.to_csv("./datasets/altered/calendar_periods.csv",index=False)

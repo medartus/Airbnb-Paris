@@ -33,6 +33,6 @@ def labelize(calendar_per):
 
 calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
 labelized = labelize(calendar_per)
-labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv", index_label='period_id')
+labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv")
 
-# print(labelized)
+print(labelized)
