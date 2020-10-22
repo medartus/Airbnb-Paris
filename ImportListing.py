@@ -37,8 +37,8 @@ DATABASE_CONTENT = [
 ]
 
 
-def ImportListings(filename):
-    listings = pd.read_csv(filename,sep=",")
+def RetrieveListings(filename):
+    listings = pd.read_csv('./datasets/listings/'+filename,sep=",")
     return listings[DATABASE_CONTENT]
 
 def FormatInsert():
@@ -54,3 +54,14 @@ def FormatUpdate():
         listColumns += DATABASE_CONTENT[index]+" = EXCLUDED."+ DATABASE_CONTENT[index]+", "
     listColumns += DATABASE_CONTENT[-1]+" = EXCLUDED."+ DATABASE_CONTENT[-1]
     return listColumns
+
+def ImportListings(filename):
+    start_time = time.time()
+    listings = RetrieveListings(filename)
+    listings['host_listings_count'] = listings['host_listings_count'].fillna(0)
+    listingsList = listings.values.tolist()
+
+    update(listingsList)
+    print("---  %s seconds ---" % (time.time() - start_time))
+
+ImportListings('listings-2020-09.csv')

@@ -55,42 +55,19 @@ def Select():
     # Close connection
     conn.close()
 
-# Select()
-
-def InsertOrUpdate():
-    # Open connection
-    conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
-
-    # Open a cursor to send SQL commands
-    cur = conn.cursor()
-
-    # Execute a SQL INSERT command
-    sql = "INSERT INTO test VALUES ('Hello World',1)"
-    cur.execute(sql)
-
-    # Commit (transactionnal mode is by default)
-    conn.commit()
-
-def update(values):
-    valuesTuples = [tuple(value) for value in values]
+def InsertOrUpdate(values):
+    valuesTuples = [tuple(value) for value in values] # Convert to an array of tuple for batch import
 
     # Open connection
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
     # Open a cursor to send SQL commands
     cur = conn.cursor()
+
     try:
         psycopg2.extras.execute_batch(cur, "INSERT INTO listings "+FormatInsert()+" VALUES ("+"%s,"*(len(DATABASE_CONTENT)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate()+";", valuesTuples)
         conn.commit()
     except error:
         print(error)
 
-
+    # Close connection
     conn.close()
-
-listings = ImportListings('./datasets/listings/listings-2020-09.csv')
-listings['host_listings_count'] = listings['host_listings_count'].fillna(0)
-listingsList = listings.values.tolist()
-
-start_time = time.time()
-update(listingsList)
-print("---  %s seconds ---" % (time.time() - start_time))
