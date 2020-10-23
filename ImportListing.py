@@ -1,6 +1,9 @@
 import pandas as pd
+import time
+import DatabaseConnector
 
-DATABASE_CONTENT = [
+# List of columns kept in the database for listings dataset
+DATABASE_LISTINGS_COLUMNS = [
     "id",
     "listing_url",
     "scrape_id",
@@ -39,29 +42,16 @@ DATABASE_CONTENT = [
 
 def RetrieveListings(filename):
     listings = pd.read_csv('./datasets/listings/'+filename,sep=",")
-    return listings[DATABASE_CONTENT]
-
-def FormatInsert():
-    listColumns = "("
-    for index in range(len(DATABASE_CONTENT)-1):
-        listColumns += DATABASE_CONTENT[index]+","
-    listColumns += DATABASE_CONTENT[-1]+")"
-    return listColumns
-
-def FormatUpdate():
-    listColumns = ""
-    for index in range(len(DATABASE_CONTENT)-1):
-        listColumns += DATABASE_CONTENT[index]+" = EXCLUDED."+ DATABASE_CONTENT[index]+", "
-    listColumns += DATABASE_CONTENT[-1]+" = EXCLUDED."+ DATABASE_CONTENT[-1]
-    return listColumns
+    return listings[DATABASE_LISTINGS_COLUMNS]
 
 def ImportListings(filename):
     start_time = time.time()
     listings = RetrieveListings(filename)
-    listings['host_listings_count'] = listings['host_listings_count'].fillna(0)
+    listings['host_listings_count'] = listings['host_listings_count'].fillna(0) # Mandatory to not have NaN to crash the importation
     listingsList = listings.values.tolist()
 
-    update(listingsList)
+    # Update the databse with Listings informations
+    DatabaseConnector.InsertOrUpdate('listings',DATABASE_LISTINGS_COLUMNS,listingsList) 
     print("---  %s seconds ---" % (time.time() - start_time))
 
-ImportListings('listings-2020-09.csv')
+# ImportListings('listings-2020-09.csv')

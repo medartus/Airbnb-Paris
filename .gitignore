@@ -3,3 +3,4 @@
 !mysql/airbnb/
 .ipynb_checkpoints/
 *.env
+__pycache__/*
