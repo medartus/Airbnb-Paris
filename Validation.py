@@ -53,7 +53,7 @@ Given a calendar and reviews dataframes,
 this function will iterate over each interesting review (after sorting)
 to search possible validation from this review and update the result in calendar.
 '''
-def validate(calendar, reviews):
+def validateCalendar(calendar, reviews):
 
     last_day = get_last_day(calendar)
     reviews = sort_reviews(reviews, last_day)
@@ -67,21 +67,20 @@ def validate(calendar, reviews):
 
     return calendar
 
-# open files
-calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
-reviews = pd.read_csv("./datasets/reviews/reviews-2020-09.csv")
+def ValidateWithReviews(calendar,filename):
+    # open files
+    reviews = pd.read_csv("./datasets/reviews/"+filename+".csv")
 
-start_time = time.time()
+    # optimize calendar data to process
+    reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
+    calendar = calendar[(calendar['end'] <= reviews['date'].max())]
+    calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
 
-# optimize calendar data to process
-reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
-calendar = calendar[(calendar['end'] <= reviews['date'].max())]
-calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
-
-# Execute validation
-validated_calendar = validate(calendar,reviews)
-print("---  %s seconds ---" % (time.time() - start_time))
-
-# Print and save result
-print(validated_calendar[validated_calendar.validation == True])
-validated_calendar[validated_calendar.validation == True].to_csv("./datasets/altered/validated_calendar_periods.csv")
+    # Execute validation
+    return validate(calendar,reviews)
+    
+# calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
+# ValidateWithReviews(calendar,"reviews-2020-09")
+# # Print and save result
+# print(validated_calendar[validated_calendar.validation == True])
+# validated_calendar[validated_calendar.validation == True].to_csv("./datasets/altered/validated_calendar_periods.csv")

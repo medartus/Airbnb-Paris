@@ -31,8 +31,8 @@ def labelize(calendar_per):
     calendar_per['label'] = calendar_per.apply(lambda period: set_label(period), axis=1)
     return calendar_per
 
-calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
-labelized = labelize(calendar_per)
-labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv")
+# calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
+# labelized = labelize(calendar_per)
+# labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv")
 
-print(labelized)
+# print(labelized)
