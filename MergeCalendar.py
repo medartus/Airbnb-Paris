@@ -3,53 +3,9 @@ import numpy as np
 import datetime as dt
 from datetime import datetime, timedelta
 
-
-New_Calendar = pd.read_csv("./datasets/c08.csv",sep = ",")
-Old_calendar = pd.read_csv("./datasets/c09.csv",sep = ",")
-
+date_format  = "%Y-%m-%d"
 #On prend en entrée un  calendrier issu de la BDD (ou le premier calendrier) qu'on nomme old et le calendrier à merge "new"
 #On fait un test de notre fonction sur les 5premieres annonces du calendrier de la BDD
-
-def merge_twocalendar(Old_calendar,New_Calendar):
-	Old_calendar["state"] = "old"
-	New_Calendar["state"] = "new"
-	unique_id = list(set(Old_calendar.listing_id))
-	sub_calendar1 = pd.DataFrame()
-	sub_calendar2 = pd.DataFrame()
-	for i in range(10):
-	    sub_calendar1 = sub_calendar1.append(Old_calendar[Old_calendar.listing_id == unique_id[i]])
-	    sub_calendar2 = sub_calendar2.append(New_Calendar[New_Calendar.listing_id == unique_id[i]])
-	New_calendar = pd.concat([sub_calendar1,sub_calendar2])
-	#Sort par annonce et date 
-	New_calendar = New_calendar.sort_values(["listing_id","start"])
-	#On enlève les dates "old" et "new" qui n'ont pas changé car on ne les utilise juste pas pour actualiser notre calendrier
-	New_calendar = New_calendar.drop_duplicates(subset=["listing_id","start","end"], keep=False)
-	Calendar_Output = New_calendar.groupby("listing_id").apply(update_by_listing_group)
-	Temp = [pair for row in Calendar_Output for pair in row]
-	Cleaned_result = pd.DataFrame(Temp)
-	Cleaned_result.columns = ["listing_id","startdate","enddate","Newdates"]
-	Uncleaned_result = Cleaned_result
-	Cleaned_result = Cleaned_result[Cleaned_result['Newdates'].map(lambda d: len(d)) > 0]
-	Result_list = Cleaned_result.values.tolist()
-	#List Format : 
-	#Result_list[X] = Iterate through differents modfications
-	#Result_list[X][0] = Listing_id
-	#Result_list[X][1] = Start Date of old calendar
-	#Result_list[X][2] = End Date of old calendar
-	#Result_list[X][3] = List of New ligns of date to implement
-	#Result_list[X][3][Y] = Iterate through different ligns to implement
-	#Result_list[X][3][Y][0] = Listing_id
-	#Result_list[X][3][Y][1] = f or t (f for closed)
-	#Result_list[X][3][Y][2] = Start date of New calendar
-	#Result_list[X][3][Y][3] = New date of New calendar
-	#Result_list[X][3][Y][4] = Numdays
-	#Result_list[X][3][Y][5] = min nights
-	#Result_list[X][3][Y][6] = max nights
-	#Result_list[X][3][Y][7] = label
-	#Result_list[X][3][Y][8] = state (old or new), not used to insert into database
-	Uncleaned_list = Uncleaned_result.values.tolist()
-	#Same than Result_list but if Uncleaned_list[X][3] is empty, then it's just an old date with no modifications
-	return Result_list
 
 def update_by_listing_group(group):
     First_iter_switch = True
@@ -100,3 +56,50 @@ def update_by_listing_group(group):
             group.pop(0)
         result.append((old_to_update[0], old_to_update[2], old_to_update[3], new_periods))
     return result
+
+
+def merge_twocalendar(Old_calendar,New_Calendar):
+	Old_calendar["state"] = "old"
+	New_Calendar["state"] = "new"
+	unique_id = list(set(Old_calendar.listing_id))
+	sub_calendar1 = pd.DataFrame()
+	sub_calendar2 = pd.DataFrame()
+	for i in range(10):
+	    sub_calendar1 = sub_calendar1.append(Old_calendar[Old_calendar.listing_id == unique_id[i]])
+	    sub_calendar2 = sub_calendar2.append(New_Calendar[New_Calendar.listing_id == unique_id[i]])
+	New_calendar = pd.concat([sub_calendar1,sub_calendar2])
+	#Sort par annonce et date 
+	New_calendar = New_calendar.sort_values(["listing_id","start"])
+	#On enlève les dates "old" et "new" qui n'ont pas changé car on ne les utilise juste pas pour actualiser notre calendrier
+	New_calendar = New_calendar.drop_duplicates(subset=["listing_id","start","end"], keep=False)
+	Calendar_Output = New_calendar.groupby("listing_id").apply(update_by_listing_group)
+	Temp = [pair for row in Calendar_Output for pair in row]
+	Cleaned_result = pd.DataFrame(Temp)
+	Cleaned_result.columns = ["listing_id","startdate","enddate","Newdates"]
+	Uncleaned_result = Cleaned_result
+	Cleaned_result = Cleaned_result[Cleaned_result['Newdates'].map(lambda d: len(d)) > 0]
+	Result_list = Cleaned_result.values.tolist()
+	#List Format : 
+	#Result_list[X] = Iterate through differents modfications
+	#Result_list[X][0] = Listing_id
+	#Result_list[X][1] = Start Date of old calendar
+	#Result_list[X][2] = End Date of old calendar
+	#Result_list[X][3] = List of New ligns of date to implement
+	#Result_list[X][3][Y] = Iterate through different ligns to implement
+	#Result_list[X][3][Y][0] = Listing_id
+	#Result_list[X][3][Y][1] = f or t (f for closed)
+	#Result_list[X][3][Y][2] = Start date of New calendar
+	#Result_list[X][3][Y][3] = New date of New calendar
+	#Result_list[X][3][Y][4] = Numdays
+	#Result_list[X][3][Y][5] = min nights
+	#Result_list[X][3][Y][6] = max nights
+	#Result_list[X][3][Y][7] = label
+	#Result_list[X][3][Y][8] = state (old or new), not used to insert into database
+	Uncleaned_list = Uncleaned_result.values.tolist()
+	#Same than Result_list but if Uncleaned_list[X][3] is empty, then it's just an old date with no modifications
+	return Result_list
+
+
+New_Calendar = pd.read_csv("./datasets/altered/c08.csv",sep = ",")
+Old_calendar = pd.read_csv("./datasets/altered/c09.csv",sep = ",")
+res = update_by_listing_group()
