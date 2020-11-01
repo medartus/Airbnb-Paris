@@ -49,7 +49,7 @@ DATABASE = os.getenv("POSTGRESQL_DATABASE")
 #         print (raw[0])
 #         print (raw[1])
 #         raw = cur.fetchone()
-
+    
 #     # Close connection
 #     conn.close()
 
@@ -70,20 +70,33 @@ def FormatUpdate(columns):
     listColumns += columns[-1]+" = EXCLUDED."+ columns[-1]
     return listColumns
 
-# PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
-def InsertOrUpdate(tableName, columns, values):
-    valuesTuples = [tuple(value) for value in values] # Convert to an array of tuple for batch import
+def ExecQueryBatch(query, values):
+    params_list = [tuple(value) for value in values]
 
-    # Open connection
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
-    # Open a cursor to send SQL commands
     cur = conn.cursor()
 
     try:
-        psycopg2.extras.execute_batch(cur, "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";", valuesTuples)
+        execute_batch(cur, query, params_list)
         conn.commit()
-    except error:
+    except Exception as error:
         print(error)
 
-    # Close connection
     conn.close()
+
+# PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
+def InsertOrUpdate(tableName, columns, values):
+    query = "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";"
+    ExecQueryBatch(query, values)
+
+def CalendarUpdaterDeleteLines(data):
+    query_to_delete = "DELETE FROM calendars WHERE listing_id = %s, start_date = %s, end_date = %s"
+    ExecQueryBatch(query_to_delete, data)
+
+def CalendarUpdaterInsertLines(data):
+    size = len(data[0])
+    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation"]
+    query_to_insert = "INSERT INTO calendars "+FormatInsert(columns)+" VALUES ("+"%s,"*(size-1)+"%s);"
+    ExecQueryBatch(query_to_insert, data)
+
+
