@@ -25,23 +25,32 @@ to_delete = []
 
 def RetrieveCalendars(filename1,filename2):
     start_time = time.time()
-    New_Calendar = pd.read_csv('./datasets/'+filename1,sep = ",")
-    Old_Calendar = pd.read_csv('./datasets/'+filename2,sep = ",")
-
     #On prend en entrée un  calendrier issu de la BDD (ou le premier calendrier) qu'on nomme old et le calendrier à merge "new"
-    #On prend en entrée notre liste de changements à effectuer sur la database
-    To_Insert,To_Delete = MergeTwoCalendars(Old_Calendar,New_Calendar)
+    Old_Calendar = pd.read_csv('./datasets/'+filename1,sep = ",")
+
+    #pour l'insertion du premier calendrier, on nomme le paramètre 2 void
+    if filename2 == "void":
+        Void_Calendar = pd.DataFrame()
+        To_Insert,To_Delete = MergeTwoCalendars(Void_Calendar,Old_Calendar)
+    else:
+        New_Calendar = pd.read_csv('./datasets/'+filename2,sep = ",")
+        #On prend en entrée notre liste de changements à effectuer sur la database
+        To_Insert,To_Delete = MergeTwoCalendars(Old_Calendar, New_Calendar)
+
     CalendarUpdaterInsertLines(To_Insert)
     #On ajoute ensuite la fonction de validation 
 
-
+    #on réinitialise les deux variables globales to_insert et to_delete
+    to_insert  = []
+    to_delete = []
     print("---  %s seconds ---" % (time.time() - start_time))
+
+
 
 
 def MergeTwoCalendars(Old_calendar,New_Calendar):
     Old_calendar["state"] = "old"
     New_Calendar["state"] = "new"
-    unique_id = list(set(Old_calendar.listing_id))
     sub_calendar1 = pd.DataFrame()
     sub_calendar2 = pd.DataFrame()
     sub_calendar1 = Old_calendar
@@ -72,9 +81,8 @@ def UpdateByListingGroup(group):
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
-            only_new_periods.append(group[u])
-        #result.append((group[0][0],0,0,only_new_periods))
-        to_insert.append(only_new_periods[:-1] + ["f"])
+            temp = group[u][:-1] + ["f"]
+            to_insert.append(temp)
         return None
     #################################################   
     #Otherwise we iterate through all of the old to check if there's a         
@@ -127,6 +135,19 @@ def UpdateByListingGroup(group):
     return None
 
 
-RetrieveCalendars("c08.csv","c09.csv")
+#RetrieveCalendars("c08.csv","void")
 
 
+
+
+'''def MergeOneCalendar(Calendar):
+
+    Calendar["state"] = "new"
+    New_calendar = Calendar
+    New_calendar = New_calendar[["listing_id","available","start","end","num_day","minimum_nights","maximum_nights","label","state"]]
+    #Sort par annonce et date 
+    New_calendar = New_calendar.sort_values(["listing_id","start"])
+    print(len(New_calendar))
+    New_calendar.groupby("listing_id").apply(UpdateByListingGroup)
+
+    return to_insert,to_delete'''

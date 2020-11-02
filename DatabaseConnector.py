@@ -77,7 +77,7 @@ def ExecQueryBatch(query, values):
     cur = conn.cursor()
 
     try:
-        execute_batch(cur, query, params_list)
+        psycopg2.extras.execute_batch(cur, query, params_list)
         conn.commit()
     except Exception as error:
         print(error)
