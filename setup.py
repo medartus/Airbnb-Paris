@@ -15,6 +15,7 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar('calendar-'+fileNameDate)
+    # Retrieve data from the database
     # Merging function
     labelizedCalendar = LabelizePeriods.labelize(calendar_per)
     print('------- End of calendar process -------')
@@ -23,6 +24,8 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of reviews process -------')
     ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
+    # Proba function
+    # Update data in the database
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 

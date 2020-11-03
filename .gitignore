@@ -1,5 +1,6 @@
-*/*.csv
-*/*/*.csv
+*.csv
+*.xlsx
+*.csv
 !mysql/airbnb/
 .ipynb_checkpoints/
 *.env

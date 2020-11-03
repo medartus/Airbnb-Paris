@@ -1,4 +1,18 @@
+DATABASE_CALENDARS_COLUMNS = [
+    "listing_id",
+    "period_id",
+    "available",
+    "start_date",
+    "end_date",
+    "num_day",
+    "minimum_nights",
+    "maximum_nights",
+    "label",
+    "validation",
+	"proba"
+]
 import os
+import pandas as pd
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -18,14 +32,6 @@ def FormatInsert(columns):
     listColumns += columns[-1]+")"
     return listColumns
 
-# Format the columns for the update exception of the PostgreSQL upsert
-# See PostgreSQL upsert syntax to understand
-def FormatUpdate(columns):
-    listColumns = ""
-    for index in range(len(columns)-1):
-        listColumns += columns[index]+" = EXCLUDED."+ columns[index]+", "
-    listColumns += columns[-1]+" = EXCLUDED."+ columns[-1]
-    return listColumns
 
 # PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
 def InsertOrUpdate(tableName, columns, values):
@@ -37,29 +43,13 @@ def InsertOrUpdate(tableName, columns, values):
     cur = conn.cursor()
 
     try:
-        psycopg2.extras.execute_batch(cur, "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";", valuesTuples)
+        psycopg2.extras.execute_batch(cur, "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s)", valuesTuples)
         conn.commit()
-    except error:
-        print(error)
-
-    # Close connection
-    conn.close()
-
-def Select(query):
-
-    # Open connection
-    conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
-    # Open a cursor to send SQL commands
-    cur = conn.cursor()
-
-    res = []
-    try:
-        cur.execute(query)
-        conn.commit()
-        res = cur.fetchall()
     except Exception as error:
         print(error)
 
     # Close connection
     conn.close()
-    return res
+
+calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+InsertOrUpdate("result",DATABASE_CALENDARS_COLUMNS,calendar.values.tolist())
