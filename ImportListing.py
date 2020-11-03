@@ -39,7 +39,6 @@ DATABASE_LISTINGS_COLUMNS = [
     "reviews_per_month"
 ]
 
-
 def RetrieveListings(filename):
     listings = pd.read_csv('./datasets/listings/'+filename,sep=",")
     return listings[DATABASE_LISTINGS_COLUMNS]
