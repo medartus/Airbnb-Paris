@@ -58,18 +58,26 @@ def validateCalendar(calendar, reviews):
     last_day = get_last_day(calendar)
     reviews = sort_reviews(reviews, last_day)
 
-    calendar["validation"] = False
 
     calendar['period_id'] = calendar.index
     calendar = calendar.set_index(['listing_id','period_id'])
+
+    newCalendar = calendar[(calendar['end_date'] <= reviews['date'].max())]
+    newCalendar = newCalendar[(newCalendar.available != 't') & (newCalendar.label != 'MIN') & (newCalendar.label != 'MAX')]
+    
+    newCalendar["validation"] = False
     
     for review in reviews.sort_values('date', ascending=False).itertuples():
-        calendar = validate_period(review,calendar)
+        newCalendar = validate_period(review,newCalendar)
+    
+    validatedCalendar = pd.concat([calendar, newCalendar[['validation']]], axis=1)
+    validatedCalendar['validation'] = validatedCalendar['validation'].fillna(False)
+    print(validatedCalendar)
 
-    calendar = calendar.reset_index()
-    del calendar['period_id']
+    validatedCalendar = validatedCalendar.reset_index()
+    del validatedCalendar['period_id']
 
-    return calendar
+    return validatedCalendar
 
 
 '''
@@ -81,8 +89,6 @@ def ValidateWithReviews(calendar,filename):
 
     # optimize calendar data to process
     reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
-    calendar = calendar[(calendar['end_date'] <= reviews['date'].max())]
-    calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
 
     # Execute validation
     return validateCalendar(calendar,reviews)

@@ -10,7 +10,6 @@ import DatabaseConnector
 date_format  = "%Y-%m-%d"
 DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
-    "period_id",
     "available",
     "start_date",
     "end_date",

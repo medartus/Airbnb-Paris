@@ -38,7 +38,6 @@ PostgreSQL upsert : Insert a new row into the table, PostgreSQL will update the 
 '''
 def ExecQueryBatch(query, values):
     params_list = [tuple(value) for value in values]
-    print(params_list)
 
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
     cur = conn.cursor()

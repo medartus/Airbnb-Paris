@@ -1,6 +1,5 @@
 import os
 import gzip
-import setup
 import shutil
 import urllib
 import datetime
