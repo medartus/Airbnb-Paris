@@ -55,14 +55,13 @@ def InsertOrUpdate(tableName, columns, values):
     query = "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";"
     ExecQueryBatch(query, values)
 
-def CalendarUpdaterDeleteLines(data):
+def CalendarDelete(data):
     query_to_delete = "DELETE FROM calendars WHERE listing_id = %s, start_date = %s, end_date = %s"
     ExecQueryBatch(query_to_delete, data)
 
-def CalendarUpdaterInsertLines(data):
-    size = len(data[0])
-    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation"]
-    query_to_insert = "INSERT INTO calendars "+FormatInsert(columns)+" VALUES ("+"%s,"*(size-1)+"%s);"
+def CalendarInsert(data):
+    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba"]
+    query_to_insert = "INSERT INTO calendars "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s);"
     ExecQueryBatch(query_to_insert, data)
 
 

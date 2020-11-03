@@ -1,7 +1,12 @@
 import time
 import ImportListing
+import OptimizeCalendar
 import LabelizePeriods
 import DownloadDatasets
+import Validation
+import MergeCalendar
+import DatabaseConnector
+import Proba
 
 '''
 Process all the datasets and save te results in the database
@@ -17,18 +22,17 @@ def ProcessDatasets(date):
 
     start_time = time.time()
     print('------- Start of calendar process -------')
-    optimizedCalendar = OptimizeCalendar('calendar-'+fileNameDate)
-    # Retrieve data from the database
-    # Merging function
-    labelizedCalendar = LabelizePeriods.labelize(calendar_per)
+    optimizedCalendar = OptimizeCalendar.OptimizeCalendar('calendar-'+fileNameDate)
+    mergedCalendar = MergeCalendar.Merging(date,optimizedCalendar)
+    labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
     
     start_time = time.time()
     print('------- Start of reviews process -------')
-    ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
-    # Proba function
-    # Update data in the database
+    validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
+    probaCalendar = Proba.AddingProba(validatedCalendar)
+    DatabaseConnector.CalendarInsert(probaCalendar)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
@@ -57,3 +61,21 @@ Process the daily importation
 def ProcessDaily():
     date = datetime.date.today()
     ProcessDate(date)
+
+
+# import pandas as pd
+# start_time = time.time()
+# print('------- Start of calendar process -------')
+# optimizedCalendar =  pd.read_csv("./datasets/altered/calendar_periods.csv")
+# mergedCalendar = MergeCalendar.Merging('2020-09-30',optimizedCalendar)
+# labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
+# print('------- End of calendar process -------')
+# print("------------ %s seconds ------------" % (time.time() - start_time))
+
+# start_time = time.time()
+# print('------- Start of reviews process -------')
+# validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-2020-09')
+# probaCalendar = Proba.AddingProba(validatedCalendar)
+# DatabaseConnector.CalendarInsert(probaCalendar.values.tolist())
+# print('------- End of reviews process -------')
+# print("------------ %s seconds ------------" % (time.time() - start_time))

@@ -1,6 +1,5 @@
 import os
 import gzip
-import setup
 import shutil
 import urllib
 import datetime
@@ -82,4 +81,4 @@ def DownloadAllDatesets(startDate):
     for day in range(numberDays.days + 1):
         DownloadDaily(day)
 
-DownloadAllDatesets('2017-01-01')
+# DownloadAllDatesets('2017-01-01')
