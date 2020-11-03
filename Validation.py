@@ -67,6 +67,10 @@ def validateCalendar(calendar, reviews):
 
     return calendar
 
+
+'''
+Given the calendar, and the review file name, it will sort reviews fields and run the validation
+'''
 def ValidateWithReviews(calendar,filename):
     # open files
     reviews = pd.read_csv("./datasets/reviews/"+filename+".csv")

@@ -10,7 +10,9 @@ USER = os.getenv("POSTGRESQL_USER")
 PASSWORD = os.getenv("POSTGRESQL_PASSWORD")
 DATABASE = os.getenv("POSTGRESQL_DATABASE")
 
-# Format to list columns for an INSERT
+'''
+Format to list columns for an INSERT
+'''
 def FormatInsert(columns):
     listColumns = "("
     for index in range(len(columns)-1):
@@ -18,8 +20,11 @@ def FormatInsert(columns):
     listColumns += columns[-1]+")"
     return listColumns
 
-# Format the columns for the update exception of the PostgreSQL upsert
-# See PostgreSQL upsert syntax to understand
+
+'''
+Format the columns for the update exception of the PostgreSQL upsert
+See PostgreSQL upsert syntax to understand
+'''
 def FormatUpdate(columns):
     listColumns = ""
     for index in range(len(columns)-1):
@@ -27,7 +32,10 @@ def FormatUpdate(columns):
     listColumns += columns[-1]+" = EXCLUDED."+ columns[-1]
     return listColumns
 
-# PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
+
+'''
+PostgreSQL upsert : Insert a new row into the table, PostgreSQL will update the row if it already exists
+'''
 def InsertOrUpdate(tableName, columns, values):
     valuesTuples = [tuple(value) for value in values] # Convert to an array of tuple for batch import
 
@@ -45,7 +53,11 @@ def InsertOrUpdate(tableName, columns, values):
     # Close connection
     conn.close()
 
-def Select(query):
+
+'''
+Get the result of an execute query to the database
+'''
+def Execute(query):
 
     # Open connection
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
