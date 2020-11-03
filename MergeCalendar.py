@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np 
 import datetime as dt
+from dateutil import relativedelta
 import time
 from datetime import datetime, timedelta
-from DatabaseConnector import *
+import DatabaseConnector
 
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
-DATABASE_CALENDAR_COLUMNS = [
+DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
+    "period_id",
     "available",
     "start_date",
     "end_date",
@@ -16,34 +18,36 @@ DATABASE_CALENDAR_COLUMNS = [
     "minimum_nights",
     "maximum_nights",
     "label",
+	"proba",
     "validation"
 ]
+
 to_insert = []
 to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def RetrieveCalendars(filename1,filename2):
-    start_time = time.time()
-    #On prend en entrée un  calendrier issu de la BDD (ou le premier calendrier) qu'on nomme old et le calendrier à merge "new"
-    Old_Calendar = pd.read_csv('./datasets/'+filename1,sep = ",")
-
-    #pour l'insertion du premier calendrier, on nomme le paramètre 2 void
-    if filename2 == "void":
-        Void_Calendar = pd.DataFrame()
-        To_Insert,To_Delete = MergeTwoCalendars(Void_Calendar,Old_Calendar)
-    else:
-        New_Calendar = pd.read_csv('./datasets/'+filename2,sep = ",")
-        #On prend en entrée notre liste de changements à effectuer sur la database
-        To_Insert,To_Delete = MergeTwoCalendars(Old_Calendar, New_Calendar)
-
-    CalendarUpdaterInsertLines(To_Insert)
-    #On ajoute ensuite la fonction de validation 
-
+def Merging(date,newCalendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     to_insert  = []
     to_delete = []
-    print("---  %s seconds ---" % (time.time() - start_time))
+
+    convertedQueryDate = dt.datetime.strptime(date,date_format).date()
+    lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
+
+    res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "'")
+    oldCalendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
+
+    if oldCalendar.empty:
+        to_insert = newCalendar.values.tolist()
+    else:
+        to_insert,to_delete = MergeTwoCalendars(oldCalendar,newCalendar)
+
+    DatabaseConnector.CalendarDelete(to_delete)
+
+    merged = pd.DataFrame(to_insert)
+    merged.columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights"]
+    return merged
 
 
 
@@ -133,10 +137,6 @@ def UpdateByListingGroup(group):
         #result.append((old_to_update[0],0,0,remaining_date))
         to_insert.append(new_date[:-1] + ["f"])
     return None
-
-
-#RetrieveCalendars("c08.csv","void")
-
 
 
 

@@ -42,7 +42,7 @@ def RetrieveData(queryDate):
     lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
 
     # Query the database
-    res = DatabaseConnector.Select("SELECT * FROM result where end_date >= '" + str(lastYearDate) + "' and start_date <= '" + str(nextMonthDate) + "'")
+    res = DatabaseConnector.Execute("SELECT * FROM result where end_date >= '" + str(lastYearDate) + "' and start_date <= '" + str(nextMonthDate) + "'")
     df = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
     return df
 
@@ -89,7 +89,7 @@ def ExportResult(queryDate):
     civil['num_day'] = civil.apply(RestrictNumDay, min_date = civilDate, max_date = convertedQueryDate, axis=1)
     predict['num_day'] = predict.apply(RestrictNumDay, min_date = convertedQueryDate, axis=1)
     
-    # Calculation of the numbers of closed days for each period
+    # Calculation of the number of closed days for each period
     estimatedPast12 = EstimateTimeRented(past12,'past12')
     estimatedCivil = EstimateTimeRented(civil,'civil')
     estimatedPredict = EstimateTimeRented(predict,'predict', False)
