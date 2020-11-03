@@ -9,14 +9,13 @@ def SizeWindow(d1, d2):
 
 
 def AddingProba(calendar):
-    for row in calendar:
-        if row['available'] == 't' or SizeWindow(row['start'], row['end']) < row['minimum_nights'] or SizeWindow(row['start'], row['end']) > row['maximum_nights']:
-            row['Proba'] = 0
-        elif SizeWindow(row['start'], row['end']) > 200:
-            row['Proba'] = 0.01
+    for index, row in calendar.iterrows():
+        if row["available"] == 't' or SizeWindow(row["start"], row["end"]) < row["minimum_nights"] or SizeWindow(row["start"], row["end"]) > row["maximum_nights"]:
+            row["Proba"] = 0        
+        #elif SizeWindow(row["start"], row["end"]) > 200: row["Proba"] = 0.01
         else:
             row['proba'] = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((SizeWindow(row['start'], row['end'])+202)/142,2))
-    calendar['Proba'] = [ random.randint(0,100)/100  for k in calendar.index]
+    #calendar['Proba'] = [ random.randint(0,100)/100  for k in calendar.index]
     return calendar
 
 AddingProba(calendar)
