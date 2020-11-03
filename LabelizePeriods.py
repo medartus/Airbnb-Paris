@@ -1,6 +1,9 @@
 import pandas as pd
 
 
+'''
+Apply labelization to a given line/period
+'''
 def set_label(period):
     # Available
     if period['available'] == 't':
@@ -27,6 +30,10 @@ def set_label(period):
             else:
                 return "M21"
 
+
+'''
+Apply labelization the each line of the dataset
+'''
 def labelize(calendar_per):
     calendar_per['label'] = calendar_per.apply(lambda period: set_label(period), axis=1)
     return calendar_per

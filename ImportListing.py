@@ -39,10 +39,16 @@ DATABASE_LISTINGS_COLUMNS = [
     "reviews_per_month"
 ]
 
+'''
+Retrieve the listings file from de dataset folder
+'''   
 def RetrieveListings(filename):
     listings = pd.read_csv('./datasets/listings/'+filename,sep=",")
     return listings[DATABASE_LISTINGS_COLUMNS]
 
+'''
+Import listings file in the database in the table listings
+'''   
 def ImportListings(filename):
     start_time = time.time()
     listings = RetrieveListings(filename)

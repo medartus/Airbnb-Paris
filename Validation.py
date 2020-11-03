@@ -67,6 +67,10 @@ def validateCalendar(calendar, reviews):
 
     return calendar
 
+
+'''
+Given the calendar, and the review file name, it will sort reviews fields and run the validation
+'''
 def ValidateWithReviews(calendar,filename):
     # open files
     reviews = pd.read_csv("./datasets/reviews/"+filename+".csv")
@@ -77,10 +81,12 @@ def ValidateWithReviews(calendar,filename):
     calendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
 
     # Execute validation
-    return validate(calendar,reviews)
+    return validateCalendar(calendar,reviews)
     
-# calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
-# ValidateWithReviews(calendar,"reviews-2020-09")
-# # Print and save result
-# print(validated_calendar[validated_calendar.validation == True])
-# validated_calendar[validated_calendar.validation == True].to_csv("./datasets/altered/validated_calendar_periods.csv")
+calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
+validated_calendar = ValidateWithReviews(calendar,"reviews-2020-09")
+# Print and save result
+print(validated_calendar[validated_calendar.validation == True])
+import random
+validated_calendar['Proba'] = [ random.randint(0,100)/100  for k in validated_calendar.index]
+validated_calendar.to_csv("./datasets/altered/validated_calendar_periods.csv")
