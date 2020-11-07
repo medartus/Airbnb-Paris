@@ -79,14 +79,14 @@ def nb_days(date1, date2):
     if (type(date2) != dt.datetime):
         date2 = dt.datetime.strptime(date2,date_format)
         
-    return abs((date1-date2).days)
+    return abs((date1-date2).days + 1)
 
 def UpdateByListingGroup(group):
     MAX_NUMBER_OF_DAYS_WHEN_EXTENDING = 2    
     global to_insert
     global to_delete
     global counter
-
+    has_intersect = True
     First_iter_switch = True
     only_new_periods = []
     number_of_lines_to_update = group[group.state == "old"].shape[0]
@@ -115,6 +115,7 @@ def UpdateByListingGroup(group):
         new_periods = []
         if(len(group) == 0):
             break
+        has_intersect = False
         for k in range(len(group)):
             new_date_start = dt.datetime.strptime(group[k][2],date_format)
             new_date_end = dt.datetime.strptime(group[k][3],date_format)
@@ -127,9 +128,9 @@ def UpdateByListingGroup(group):
                 break
             
             #period dans les bornes
-            if(new_date_start <= old_date_end):
-                if (group[k][1] == "f" 
-                    and number_days_new_period - number_days_old_period > MAX_NUMBER_OF_DAYS_WHEN_EXTENDING
+            if(new_date_start <= old_date_end and group[k][1] == "f"):
+                has_intersect = True
+                if (number_days_new_period - number_days_old_period > MAX_NUMBER_OF_DAYS_WHEN_EXTENDING
                     and number_days_new_period - number_days_old_period > 0
                     #and (new_date_start == old_date_start or new_date_end == old_date_end)
                    ):
@@ -139,7 +140,6 @@ def UpdateByListingGroup(group):
 
                     #case right extend
                     if(new_date_start == old_date_start):
-                        #print(group[k])
                         #print("1")
                         first_period = old_to_update.copy()
                         second_period = group[k].copy()
@@ -173,17 +173,20 @@ def UpdateByListingGroup(group):
 
                     new_periods.append(first_period[:-1] + ["f"])
                     group.append(second_period[:-1] + ["f"])
+                else:
+                    new_periods.append(group[k][:-1] +["f"])
                 
+        if has_intersect:
+            to_delete.append(old_to_update[:-1] + ["f"])
+        
+        for new_date in new_periods:
+            to_insert.append(new_date[:-1] + ["f"])
         for l in range(k):
             group.pop(0)
             
         #result.append((old_to_update[0], old_to_update[2], old_to_update[3], new_periods))
-        if len(new_periods) == 0:
-            pass
-        else:
-            to_delete.append(old_to_update[:-1] + ["f"])
-            for new_date in new_periods:
-                to_insert.append(new_date[:-1] + ["f"])
+
+
 
     #Verifier qu'on ne finit pas en laissant des dates "new" qui sont simplement en dehors de toute intersection avec les dates "old"
     #Cas : Old : du 20 janvier au 21 janvier , New: du 22 janvier au 23 janvier, Old : du 24 janvier au 26 janvier
@@ -191,12 +194,3 @@ def UpdateByListingGroup(group):
         #result.append((old_to_update[0],0,0,remaining_date))
         to_insert.append(remaining_date[:-1] + ["f"])
     return None
-
-
-<<<<<<< Updated upstream
-=======
-
-
->>>>>>> Stashed changes
-
-
