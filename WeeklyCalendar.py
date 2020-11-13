@@ -45,3 +45,4 @@ New_Calendar = PreprocessCalendar(df)
 #appliquer LabelizePeriods.py ? #Comment appliquer un label sans min et max nights? Pourquoi y a -t-il plus de 365 jours ? 
 #listing_id bien récpuéré? est-ce les mêmes que les notre? Est-ce que ça change ? 
 #Trasnforme 82000 lignes en 546000 lignes...
+#Solution pour listing 

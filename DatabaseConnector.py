@@ -57,7 +57,7 @@ def InsertOrUpdate(tableName, columns, values):
     ExecQueryBatch(query, values)
 
 def CalendarDelete(data):
-    query_to_delete = "DELETE FROM calendars WHERE listing_id = %s, start_date = %s, end_date = %s"
+    query_to_delete = "DELETE FROM calendars WHERE cal_key = %s"
     ExecQueryBatch(query_to_delete, data)
 
 def CalendarInsert(data):
