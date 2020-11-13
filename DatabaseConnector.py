@@ -10,6 +10,7 @@ USER = os.getenv("POSTGRESQL_USER")
 PASSWORD = os.getenv("POSTGRESQL_PASSWORD")
 DATABASE = os.getenv("POSTGRESQL_DATABASE")
 
+
 '''
 Format to list columns for an INSERT
 '''

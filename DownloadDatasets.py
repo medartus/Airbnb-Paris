@@ -81,4 +81,4 @@ def DownloadAllDatesets(startDate):
     for day in range(numberDays.days + 1):
         DownloadDaily(day)
 
-# DownloadAllDatesets('2017-01-01')
+DownloadAllDatesets('2020-08-01')
