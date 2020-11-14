@@ -4,6 +4,7 @@ import shutil
 import urllib
 import datetime
 import urllib.request
+from dateutil import relativedelta
 
 datasets = ['listings','reviews','calendar']
 
@@ -14,7 +15,8 @@ def VerifyDatasetExists(datesetType,date):
     fileNameDate = str(date)[:7]
     fileName = datesetType+"-"+fileNameDate
     exists = os.path.isfile("./datasets/"+datesetType+"/"+fileName+".csv") 
-    print(f'------ {fileName} already exists ------')
+    if exists:
+        print(f'------ {fileName} already exists ------')
     return exists
 
 
@@ -45,8 +47,10 @@ def DownloadFile(date,fileName):
 '''
 Download yesterday dataset
 ''' 
-def DownloadDaily(days=1):
-    date = datetime.date.today() - datetime.timedelta(days)
+def DownloadDaily(days=1,startDate = None):
+    if not startDate:
+        startDate = datetime.date.today()
+    date = startDate - datetime.timedelta(days)
     print(f'--- Download file for {date} ---')
     return DownloadDate(date)
 
@@ -75,10 +79,16 @@ def createFolder():
 '''
 Download all the datasets from a specific starting date
 ''' 
-def DownloadAllDatesets(startDate):
+def DownloadAllDatesets(startDate,endDate=None):
     createFolder()
-    numberDays = datetime.date.today() - datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
-    for day in range(numberDays.days + 1):
-        DownloadDaily(day)
+    startDate = datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
+    if endDate:
+        endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
+    else:
+        endDate = datetime.date.today()
+    while startDate <= endDate:
+        print(f'--- Download file for {startDate.strftime("%Y-%m-%d")} ---')
+        DownloadDate(startDate)
+        startDate = startDate + relativedelta.relativedelta(days=1)
 
-DownloadAllDatesets('2020-08-01')
+DownloadAllDatesets('2017-01-01','2017-04-01')

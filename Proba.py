@@ -68,10 +68,10 @@ def CheckIfLastPeriodIsClosed(calendar, index):
 
 
 
-calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-del calendar['Proba']
-res = AddingProba(calendar,"listings-2020-09.csv")
-print(res)
+# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+# del calendar['Proba']
+# res = AddingProba(calendar,"listings-2020-09.csv")
+# print(res)
 #AdjustProbaByValidation(row, tempProba)
 #FindLastPeriodClosed()
 #GetMaxReviewDate("2020-02-05")

@@ -128,7 +128,7 @@ def SaveResult(queryDate, result, exportFormatList, filename=None):
             DatabaseConnector.Insert(listResult,'results',DATABASE_RESULTS_COLUMNS)
 
 
-queryDate = '2020-09-28'
-result = ExportResult(queryDate)
-# result.to_csv("./datasets/altered/plop.csv")
-result.to_excel("./datasets/altered/plop.xlsx")
+# queryDate = '2020-09-28'
+# result = ExportResult(queryDate)
+# # result.to_csv("./datasets/altered/plop.csv")
+# result.to_excel("./datasets/altered/plop.xlsx")

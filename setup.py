@@ -7,6 +7,8 @@ import Validation
 import MergeCalendar
 import DatabaseConnector
 import Proba
+import datetime
+from dateutil import relativedelta
 
 DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
@@ -31,22 +33,26 @@ def ProcessDatasets(date):
 
     start_time = time.time()
     print('------- Start of listings process -------')
-    ImportListing.ImportListings('listings-'+fileNameDate)
+    ImportListing.ImportListings('listings-{fileNameDate}.csv')
     print('------- End of listings process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.OptimizeCalendar('calendar-'+fileNameDate)
+    optimizedCalendar.to_csv(f"./datasets/saved/opti_calendar-{fileNameDate}.csv")
     mergedCalendar = MergeCalendar.Merging(date,optimizedCalendar)
     labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
+    labelizedCalendar.to_csv(f"./datasets/saved/label_calendar-{fileNameDate}.csv")
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
     
     start_time = time.time()
     print('------- Start of reviews process -------')
     validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
+    validatedCalendar.to_csv(f"./datasets/saved/valid_calendar-{fileNameDate}.csv")
     probaCalendar = Proba.AddingProba(validatedCalendar,'listings-'+fileNameDate+'.csv')
+    probaCalendar.to_csv(f"./datasets/saved/proba_calendar-{fileNameDate}.csv")
     extValidatedCalendar = probaCalendar # A remove
     # extValidatedCalendar =  ValidateWithExternalReviews(probaCalendar)
     listExtValidatedCalendar = extValidatedCalendar.values.tolist()
@@ -63,7 +69,7 @@ def ProcessDate(date):
     isListings = DownloadDatasets.VerifyDatasetExists('listings',date)
     isCalendar = DownloadDatasets.VerifyDatasetExists('calendar',date)
     isReviews = DownloadDatasets.VerifyDatasetExists('reviews',date)
-    hasDatasets = isListings and isCalendar and isReviews
+    hasDatasets = isListings and isCalendar # and isReviews
 
     if not hasDatasets: # Download if datasets don't exist
         hasDatasets = DownloadDatasets.DownloadDate(date)
@@ -80,20 +86,11 @@ def ProcessDaily():
     date = datetime.date.today()
     ProcessDate(date)
 
+def ProcessDateRange(startDate,endDate):
+    startDate = datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
+    endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
+    while startDate <= endDate:
+        ProcessDate(startDate)
+        startDate = startDate + relativedelta.relativedelta(months=1)
 
-# import pandas as pd
-# start_time = time.time()
-# print('------- Start of calendar process -------')
-# optimizedCalendar =  pd.read_csv("./datasets/altered/calendar_periods.csv")
-# mergedCalendar = MergeCalendar.Merging('2020-09-30',optimizedCalendar)
-# labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
-# print('------- End of calendar process -------')
-# print("------------ %s seconds ------------" % (time.time() - start_time))
-
-# start_time = time.time()
-# print('------- Start of reviews process -------')
-# validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-2020-09')
-# probaCalendar = Proba.AddingProba(validatedCalendar)
-# DatabaseConnector.CalendarInsert(probaCalendar.values.tolist())
-# print('------- End of reviews process -------')
-# print("------------ %s seconds ------------" % (time.time() - start_time))
+ProcessDateRange('2017-01-01','2017-04-01')

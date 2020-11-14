@@ -18,9 +18,7 @@ def OptimizeCalendar(filename):
     calendar = calendar.reset_index()
 
     # drop useless tables
-    del calendar['price']
-    del calendar['index']
-    del calendar['adjusted_price']
+    calendar = calendar.drop(['price', 'index','adjusted_price'])
 
     # Group periods
     adj_check = (calendar.available != calendar.available.shift()).cumsum() # Avoid to grop no consecutive rows

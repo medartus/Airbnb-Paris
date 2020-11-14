@@ -1,5 +1,4 @@
 import pandas as pd
-import time
 import DatabaseConnector
 
 # List of columns kept in the database for listings dataset
@@ -50,13 +49,11 @@ def RetrieveListings(filename):
 Import listings file in the database in the table listings
 '''   
 def ImportListings(filename):
-    start_time = time.time()
     listings = RetrieveListings(filename)
     listings['host_listings_count'] = listings['host_listings_count'].fillna(0) # Mandatory to not have NaN to crash the importation
     listingsList = listings.values.tolist()
 
     # Update the databse with Listings informations
     DatabaseConnector.InsertOrUpdate('listings',DATABASE_LISTINGS_COLUMNS,listingsList) 
-    print("---  %s seconds ---" % (time.time() - start_time))
 
 # ImportListings('listings-2020-09.csv')
