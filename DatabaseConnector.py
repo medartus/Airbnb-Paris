@@ -60,9 +60,8 @@ def CalendarDelete(data):
     query_to_delete = "DELETE FROM calendars WHERE cal_key = %s"
     ExecQueryBatch(query_to_delete, data)
 
-def CalendarInsert(data):
-    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba"]
-    query_to_insert = "INSERT INTO calendars "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s);"
+def Insert(data,tableName,columns):
+    query_to_insert = "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s);"
     ExecQueryBatch(query_to_insert, data)
 
 

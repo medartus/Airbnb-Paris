@@ -73,7 +73,8 @@ def Merging(filename):
         to_insert["proba"] = -1
         to_insert = to_insert.values.tolist()
     print("Insert into DB...")
-    DatabaseConnector.CalendarInsert(to_insert)
+    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba","ext_validation"]
+    DatabaseConnector.Insert(to_insert,'calendars',columns)
     print("Insert done ! ")
     return True
 

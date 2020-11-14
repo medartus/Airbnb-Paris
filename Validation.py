@@ -31,11 +31,10 @@ def sort_reviews(reviews, last_day):
 Given a review, this funtion will search for any period of the calendar the review is possibly a validation of.
 If there is several, it validates the shortest period.
 '''   
-def validate_period(review,calendar):
+def validate_internal_period(review, calendar):
     try:
         # Select possible validation regarding several criteras
         validations = calendar.loc[[review.listing_id]]
-        # validations = validations[ (validations.validation == False) & (validations.available != 't') & (validations.label != 'MIN') & (validations.label != 'MAX')]
         validations = validations[validations.validation == False]
         validations = validations[ (validations.end_date <= review.date) & (review.date <= validations.end_date + timedelta(days=14))]
 
@@ -44,7 +43,27 @@ def validate_period(review,calendar):
             validated_index = validations.sort_values(by="num_day").index.values
             calendar.at[validated_index, 'validation'] = True
     except:
-        # print(review.listing_id)
+        pass
+    return calendar
+
+
+'''
+Given a review, this funtion will search for any period of the calendar the review is possibly a validation of.
+If there is several, it validates the shortest period.
+'''   
+def validate_external_period(review, calendar):
+    try:
+        # Select possible validation regarding several criteras
+        validations = calendar.loc[[review.listing_id]]
+        validations = validations[validations.validation == False]
+        validations = validations[validations.ext_validation < review.corresp]
+        validations = validations[ (validations.end_date <= review.date) & (review.date <= validations.end_date + timedelta(days=14))]
+
+        # if there is validations, mark the shortest period as validated
+        if not validations.empty:
+            validated_index = validations.sort_values(by="num_day").index.values
+            calendar.at[validated_index, 'ext_validation'] = review.corresp
+    except:
         pass
     return calendar
 
@@ -53,7 +72,7 @@ Given a calendar and reviews dataframes,
 this function will iterate over each interesting review (after sorting)
 to search possible validation from this review and update the result in calendar.
 '''
-def validateCalendar(calendar, reviews):
+def validateInternalCalendar(calendar, reviews):
 
     last_day = get_last_day(calendar)
     reviews = sort_reviews(reviews, last_day)
@@ -68,11 +87,41 @@ def validateCalendar(calendar, reviews):
     newCalendar["validation"] = False
     
     for review in reviews.sort_values('date', ascending=False).itertuples():
-        newCalendar = validate_period(review,newCalendar)
+        newCalendar = validate_internal_period(review,newCalendar)
     
     validatedCalendar = pd.concat([calendar, newCalendar[['validation']]], axis=1)
     validatedCalendar['validation'] = validatedCalendar['validation'].fillna(False)
-    print(validatedCalendar)
+
+    validatedCalendar = validatedCalendar.reset_index()
+    del validatedCalendar['period_id']
+
+    return validatedCalendar
+
+
+'''
+Given a calendar and reviews dataframes,
+this function will iterate over each interesting review (after sorting)
+to search possible validation from this review and update the result in calendar.
+'''
+def validateExternalCalendar(calendar, reviews):
+
+    last_day = get_last_day(calendar)
+    reviews = sort_reviews(reviews, last_day)
+
+
+    calendar['period_id'] = calendar.index
+    calendar = calendar.set_index(['listing_id','period_id'])
+
+    newCalendar = calendar[(calendar['end_date'] <= reviews['date'].max())]
+    newCalendar = newCalendar[(newCalendar.available != 't') & (newCalendar.label != 'MIN') & (newCalendar.label != 'MAX')]
+    
+    newCalendar["ext_validation"] = 0
+    
+    for review in reviews.sort_values('date', ascending=False).itertuples():
+        newCalendar = validate_external_period(review,newCalendar)
+    
+    validatedCalendar = pd.concat([calendar, newCalendar[['ext_validation']]], axis=1)
+    validatedCalendar['ext_validation'] = validatedCalendar['ext_validation'].fillna(0)
 
     validatedCalendar = validatedCalendar.reset_index()
     del validatedCalendar['period_id']
@@ -91,7 +140,7 @@ def ValidateWithReviews(calendar,filename):
     reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
 
     # Execute validation
-    return validateCalendar(calendar,reviews)
+    return validateInternalCalendar(calendar,reviews)
     
 # calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
 # validated_calendar = ValidateWithReviews(calendar,"reviews-2020-09")

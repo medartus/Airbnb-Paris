@@ -16,6 +16,26 @@ DATABASE_CALENDARS_COLUMNS = [
 	"proba"
 ]
 
+DATABASE_RESULTS_COLUMNS = [
+	"extraction_date",
+    "listing_id",
+	"past12_m50",
+	"past12_m75",
+    "past12_m95",
+	"past12_m100",
+	"past12_m95_e75",
+	"past12_m100_e75",
+	"civil_m50",
+	"civil_m75",
+    "civil_m95",
+	"civil_m100",
+	"civil_m95_e75",
+	"civil_m100_e75",
+	"predict_m50",
+    "predict_m75",
+	"predict_m95"
+]
+
 '''
 Rectifies the difference in the number of days to rent if the reservation dates are less or more than the deadline
 '''
@@ -90,6 +110,19 @@ def ExportResult(queryDate):
     estimatedPredict = EstimateTimeRented(predict,'predict', False)
 
     return pd.concat([estimatedPast12, estimatedCivil, estimatedPredict], axis=1).fillna(0).astype(int)
+
+def SaveResult(queryDate, result, exportFormatList, filename=None):
+    for exportFormat in exportFormatList:
+        if exportFormat == "csv":
+            result.to_csv(f"./datasets/altered/{filename}.csv")
+        if exportFormat == "excel":
+            result.to_excel(f"./datasets/altered/{filename}.xlsx")
+        if exportFormat == "database":
+            result['extraction_date'] = queryDate
+            listResult = result.values.tolist()
+            DatabaseConnector.Execute(f'DELETE FROM results WHERE extraction_date = {queryDate}')
+            DatabaseConnector.Insert(listResult,'results',DATABASE_RESULTS_COLUMNS)
+
 
 queryDate = '2020-09-28'
 result = ExportResult(queryDate)

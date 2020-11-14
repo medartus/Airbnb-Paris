@@ -32,7 +32,9 @@ def ProcessDatasets(date):
     print('------- Start of reviews process -------')
     validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
     probaCalendar = Proba.AddingProba(validatedCalendar)
-    DatabaseConnector.CalendarInsert(probaCalendar)
+    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba","ext_validation"]
+    listProbaCalendar = probaCalendar.values.tolist()
+    DatabaseConnector.Insert(listProbaCalendar,'calendars',columns)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
