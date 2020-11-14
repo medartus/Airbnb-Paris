@@ -8,6 +8,21 @@ import MergeCalendar
 import DatabaseConnector
 import Proba
 
+DATABASE_CALENDARS_COLUMNS = [
+    "listing_id",
+    "available",
+    "start_date",
+    "end_date",
+    "num_day",
+    "minimum_nights",
+    "maximum_nights",
+    "label",
+    "validation",
+	"proba",
+    "ext_validation"
+]
+
+
 '''
 Process all the datasets and save te results in the database
 '''
@@ -31,10 +46,11 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of reviews process -------')
     validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
-    probaCalendar = Proba.AddingProba(validatedCalendar)
-    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba","ext_validation"]
-    listProbaCalendar = probaCalendar.values.tolist()
-    DatabaseConnector.Insert(listProbaCalendar,'calendars',columns)
+    probaCalendar = Proba.AddingProba(validatedCalendar,'listings-'+fileNameDate+'.csv')
+    extValidatedCalendar = probaCalendar # A remove
+    # extValidatedCalendar =  ValidateWithExternalReviews(probaCalendar)
+    listExtValidatedCalendar = extValidatedCalendar.values.tolist()
+    DatabaseConnector.Insert(listExtValidatedCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 

@@ -26,7 +26,8 @@ DATABASE_CALENDARS_COLUMNS = [
     "maximum_nights",
     "label",
     "validation",
-    "proba"
+    "proba",
+    "ext_validation"
 ]
 
 to_insert = []
@@ -34,17 +35,13 @@ to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(filename):
+def Merging(date,newCalendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
 
-    #lecture du nouveau cal
-    new_calendar = pd.read_csv(filename,sep = ",")
-    new_calendar = new_calendar.sort_values(["listing_id","start"])
-    date = new_calendar[:1].start
     convertedQueryDate = dt.datetime.strptime(date.values[0],date_format).date()    
     lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
 
@@ -54,12 +51,7 @@ def Merging(filename):
 
     #if first calendar
     if old_calendar.empty:
-        new_calendar = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
-        new_calendar = new_calendar[["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label"]]
-        new_calendar["validation"] = "f"
-        new_calendar["proba"] = -1
-        to_insert = new_calendar.values.tolist()
-
+        to_insert = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
     #typical use of the function
     else:
         print("Merging...")
@@ -69,14 +61,8 @@ def Merging(filename):
         DatabaseConnector.CalendarDelete(to_delete)
         print("Deleting OK ! ")
         to_insert = pd.DataFrame(to_insert)
-        to_insert.columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation"]
-        to_insert["proba"] = -1
-        to_insert = to_insert.values.tolist()
-    print("Insert into DB...")
-    columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation","proba","ext_validation"]
-    DatabaseConnector.Insert(to_insert,'calendars',columns)
-    print("Insert done ! ")
-    return True
+
+    return to_insert
 
 
 def MergeTwoCalendars(old_calendar,new_calendar):

@@ -13,7 +13,8 @@ DATABASE_CALENDARS_COLUMNS = [
     "maximum_nights",
     "label",
     "validation",
-	"proba"
+	"proba",
+    "ext_validation"
 ]
 
 DATABASE_RESULTS_COLUMNS = [
@@ -64,12 +65,15 @@ Create the estimated columns with the different probability aggregates
 '''
 def EstimateTimeRented(dataframe, dataframeName, isPast = True):
     tot = dataframe.groupby('listing_id').num_day.sum().rename(dataframeName+"_tot")
-    m95 = dataframe[dataframe.proba >= 0.5].groupby('listing_id').num_day.sum().rename(dataframeName+"_m50")
-    m95 = dataframe[dataframe.proba >= 0.75].groupby('listing_id').num_day.sum().rename(dataframeName+"_m75")
+    m50 = dataframe[dataframe.proba >= 0.5].groupby('listing_id').num_day.sum().rename(dataframeName+"_m50")
+    m75 = dataframe[dataframe.proba >= 0.75].groupby('listing_id').num_day.sum().rename(dataframeName+"_m75")
     m95 = dataframe[dataframe.proba >= 0.95].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95")
     m100 = dataframe[dataframe.proba == 1.0].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100")
 
-    res = [tot, m95, m100] if isPast else [tot, m95]
+    m95_e75 = dataframe[(dataframe.proba >= 0.95) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95_e75")
+    m100_e75 = dataframe[(dataframe.proba == 1.0) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100_e75")
+
+    res = [tot, m50, m75, m95, m100, m95_e75, m100_e75] if isPast else [tot, m50, m75, m95]
 
     return pd.concat(res, axis=1)
 

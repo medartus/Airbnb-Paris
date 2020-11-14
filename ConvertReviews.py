@@ -19,7 +19,7 @@ def VerifyMemo(memo, validationTable, src_id, comp_site, comp_id, corresp):
         memo[src_id] = {}
     if comp_id not in memo[src_id]:
         memo[src_id][comp_id] = True
-        validationTable = validationTable.append({'listing_id': src_id,'src_type':comp_site,'src_id':comp_id,'corresp':corresp}, ignore_index=True)
+        validationTable = validationTable.append({'listing_id': src_id,'src_type':comp_site,'src_id':comp_id,'corresp':corresp}, ignore_index=True,sort=False)
     return validationTable
 
 def CreateValidationTable(memo, validationTable, row):
@@ -102,13 +102,12 @@ def GroupReviews(date):
 
     return grouped
 
-def ValidateWithExternalReviews(calendar, date):
+def ValidateWithExternalReviews(calendar):
+    date = get_last_day(calendar)
     groupedReviews = GroupReviews(date)
     groupedReviews['listing_id'] = groupedReviews['listing_id'].astype(int)
     return Validation.validateExternalCalendar(calendar,groupedReviews)
 
-date = datetime.datetime(2020, 7, 17)
-
-calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-res = ValidateWithExternalReviews(calendar,date)
-print(res[res['ext_validation'] != 0])
+# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+# res = ValidateWithExternalReviews(calendar)
+# print(res[res['ext_validation'] != 0])
