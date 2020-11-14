@@ -44,6 +44,8 @@ Create the estimated columns with the different probability aggregates
 '''
 def EstimateTimeRented(dataframe, dataframeName, isPast = True):
     tot = dataframe.groupby('listing_id').num_day.sum().rename(dataframeName+"_tot")
+    m95 = dataframe[dataframe.proba >= 0.5].groupby('listing_id').num_day.sum().rename(dataframeName+"_m50")
+    m95 = dataframe[dataframe.proba >= 0.75].groupby('listing_id').num_day.sum().rename(dataframeName+"_m75")
     m95 = dataframe[dataframe.proba >= 0.95].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95")
     m100 = dataframe[dataframe.proba == 1.0].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100")
 
