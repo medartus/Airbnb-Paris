@@ -43,7 +43,7 @@ def InsertOrUpdate(tableName, columns, values):
     cur = conn.cursor()
 
     try:
-        psycopg2.extras.execute_batch(cur, "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s)", valuesTuples)
+        psycopg2.extras.execute_batch(cur, "INSERT INTO ("+tableName+" "+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s)", valuesTuples)
         conn.commit()
     except Exception as error:
         print(error)

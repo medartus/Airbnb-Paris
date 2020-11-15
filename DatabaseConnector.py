@@ -15,10 +15,10 @@ DATABASE = os.getenv("POSTGRESQL_DATABASE")
 Format to list columns for an INSERT
 '''
 def FormatInsert(columns):
-    listColumns = "("
+    listColumns = ""
     for index in range(len(columns)-1):
         listColumns += columns[index]+","
-    listColumns += columns[-1]+")"
+    listColumns += columns[-1]
     return listColumns
 
 
@@ -53,7 +53,7 @@ def ExecQueryBatch(query, values):
 
 # PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
 def InsertOrUpdate(tableName, columns, values):
-    query = "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";"
+    query = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";"
     ExecQueryBatch(query, values)
 
 def CalendarDelete(data):
@@ -61,7 +61,7 @@ def CalendarDelete(data):
     ExecQueryBatch(query_to_delete, data)
 
 def Insert(data,tableName,columns):
-    query_to_insert = "INSERT INTO "+tableName+" "+FormatInsert(columns)+" VALUES ("+"%s,"*(len(columns)-1)+"%s);"
+    query_to_insert = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s);"
     ExecQueryBatch(query_to_insert, data)
 
 

@@ -18,10 +18,7 @@ DATABASE_CALENDARS_COLUMNS = [
     "num_day",
     "minimum_nights",
     "maximum_nights",
-    "label",
-    "validation",
-    "proba",
-    "ext_validation"
+    "label"
 ]
 
 to_insert = []
@@ -38,9 +35,10 @@ def Merging(new_calendar):
     
     minDate = new_calendar['start_date'].min()
     lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(years=1)
-
+    
     #get data from db and format
-    res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(lastYearDate) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
@@ -48,13 +46,9 @@ def Merging(new_calendar):
         to_insert = new_calendar
     #typical use of the function
     else:
-        print("Merging...")
-        to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)  
-        print("Merging OK !")
-        print("Deleting...")    
+        to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
         DatabaseConnector.CalendarDelete(to_delete)
-        print("Deleting OK ! ")
-        to_insert = pd.DataFrame(to_insert)
+        to_insert = pd.DataFrame(to_insert,columns=DATABASE_CALENDARS_COLUMNS[1:])
 
     return to_insert
 
@@ -64,8 +58,8 @@ def MergeTwoCalendars(old_calendar,new_calendar):
     new_calendar["state"] = "new"
 
     #joining both calendars
-    concat_cal = pd.concat([old_calendar,new_calendar])
-    concat_cal = concat_cal[["cal_key","listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","state"]]
+    concat_cal = pd.concat([old_calendar,new_calendar],sort=False)
+    concat_cal = concat_cal[DATABASE_CALENDARS_COLUMNS + ["state"]]
 
     #Sort par annonce et date 
     concat_cal = concat_cal.sort_values(["listing_id","start_date"])
@@ -118,7 +112,7 @@ def UpdateByListingGroup(group):
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
-            temp = group[u][1:-1] + ["f"]
+            temp = group[u][1:-1]
             to_insert.append(temp)
         return None    
     #################################################   
@@ -127,8 +121,8 @@ def UpdateByListingGroup(group):
     #Otherwise we iterate through all of the old to check if there's a         
     for i in range(number_of_lines_to_update):
         j = 0
-            
-        while(group[j][9] == "new"):
+
+        while(group[j][8] == "new"):
             j+=1
         
         old_to_update = group.pop(j)
@@ -190,8 +184,8 @@ def UpdateByListingGroup(group):
                         
                         second_period[5] = nb_days(second_period[4],second_period[3])
                                                 
-                        new_periods.append(first_period[1:-1] + ["f"])
-                        new_periods.append(second_period[1:-1] + ["f"])
+                        new_periods.append(first_period[1:-1])
+                        new_periods.append(second_period[1:-1])
                         
                     #case left extend
                     else:
@@ -201,8 +195,8 @@ def UpdateByListingGroup(group):
                         first_period[5] = nb_days(first_period[3],first_period[4])
                         second_period = old_to_update.copy()
 
-                        new_periods.append(first_period[1:-1] + ["f"])
-                        new_periods.append(second_period[1:-1] + ["f"])
+                        new_periods.append(first_period[1:-1])
+                        new_periods.append(second_period[1:-1])
 
                 #Case where there's an extension with no similar bounds for both start and end date
                 elif(new_date_end > old_date_end):
@@ -215,10 +209,10 @@ def UpdateByListingGroup(group):
                     second_period[3] = (old_date_end+timedelta(days=1)).strftime(date_format)
                     second_period[5] = nb_days(second_period[4],second_period[3])
                     
-                    new_periods.append(first_period[1:-1] + ["f"])
+                    new_periods.append(first_period[1:-1])
                     group.append(second_period)
                 else:
-                    new_periods.append(group[k][1:-1] +["f"])
+                    new_periods.append(group[k][1:-1])
                 
         #Append all old dates to delete that had an intersection with new dates
         if has_intersect:
@@ -226,14 +220,14 @@ def UpdateByListingGroup(group):
             
         #append all new periods we created
         for period in new_periods:
-            to_insert.append(period[:-1] + ["f"])
+            to_insert.append(period[:-1])
         for l in range(k):
             group.pop(0)
 
     #Verifier qu'on ne finit pas en laissant des dates "new" qui sont simplement en dehors de toute intersection avec les dates "old"
     #Cas : Old : du 20 janvier au 21 janvier , New : du 22 janvier au 23 janvier, Old : du 24 janvier au 26 janvier
     for remaining_date in group:
-        to_insert.append(remaining_date[1:-1] + ["f"])
+        to_insert.append(remaining_date[1:-1])
     return None
 
 def ProcessAndSave(fileNameDate,SavedName,newCalendar):

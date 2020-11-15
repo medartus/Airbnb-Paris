@@ -50,7 +50,7 @@ def ImportListings(filename):
     result = DatabaseConnector.Execute('SELECT max(last_scraped) from listings')
     listings = RetrieveListings(filename)
     dataExists = False
-    if len(result) > 0:
+    if len(result) > 0 and result[0][0] != None:
         csvDate = dt.datetime.strptime(listings['last_scraped'].max(), "%Y-%m-%d")
         databaseDate = dt.datetime.strptime(result[0][0], "%Y-%m-%d")
         dataExists = databaseDate >= csvDate
