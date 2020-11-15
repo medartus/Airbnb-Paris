@@ -47,12 +47,14 @@ def UnzipFiles(fileNameDate):
         with gzip.open('./datasets/'+folderName+'/'+fileName+'.csv.gz', 'rb') as f_in:
             with open('./datasets/'+folderName+'/'+fileName+'.csv', 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
-    if not os.path.isdir(f'./datasets/saved/{fileNameDate}'):
-        shutil.unpack_archive(f'./datasets/saved/{fileNameDate}.zip', f'./datasets/saved/{fileNameDate}', 'zip')  
+    shutil.unpack_archive(f'./datasets/saved/{fileNameDate}.zip', f'./datasets/saved/{fileNameDate}', 'zip')  
     
-def ZipSaved(fileNameDate):
-    shutil.make_archive(fileNameDate, 'zip', f'./datasets/saved/{fileNameDate}')
-    os.rmdir(f'./datasets/saved/{fileNameDate}')
+def CleanProcess(fileNameDate):
+    shutil.make_archive(f'./datasets/saved/{fileNameDate}', 'zip', f'./datasets/saved/{fileNameDate}')
+    shutil.rmtree(f'./datasets/saved/{fileNameDate}')
+    for folderName in datasets:
+        fileName = folderName + '-' +fileNameDate
+        os.remove('./datasets/'+folderName+'/'+fileName+'.csv')
 
 
 '''
@@ -75,9 +77,8 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    print(optimizedCalendar)
     mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',date,optimizedCalendar)
-    labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
+    labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
@@ -92,7 +93,7 @@ def ProcessDatasets(date):
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
-    ZipSaved(fileNameDate)
+    CleanProcess(fileNameDate)
 
 
 '''
@@ -129,4 +130,4 @@ def ProcessDateRange(startDate,endDate):
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
-ProcessDateRange('2017-01-01','2017-04-01')
+ProcessDateRange('2017-01-01','2017-02-01')

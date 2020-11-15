@@ -254,7 +254,7 @@ def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
         start_time = time.time()
         df = Merging(date,newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 #EXEMPLE

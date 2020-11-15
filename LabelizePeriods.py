@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import os
 
 '''
 Apply labelization to a given line/period
@@ -37,6 +38,18 @@ Apply labelization the each line of the dataset
 def labelize(calendar_per):
     calendar_per['label'] = calendar_per.apply(set_label, axis=1)
     return calendar_per
+
+def ProcessAndSave(fileNameDate,SavedName,calendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = labelize(calendar)
+        print(f'--- Labelized {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        return df
 
 # calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
 # start_time = time.time()

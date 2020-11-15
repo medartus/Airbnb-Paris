@@ -50,7 +50,7 @@ def ProcessAndSave(fileNameDate,SavedName):
         start_time = time.time()
         df = OptimizeCalendar(fileNameDate)
         print(f'--- Optimizing {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 # start_time = time.time()

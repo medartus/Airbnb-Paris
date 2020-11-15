@@ -152,7 +152,7 @@ def ProcessAndSave(fileNameDate,SavedName,calendar):
         start_time = time.time()
         df = ValidateWithReviews(calendar,fileNameDate)
         print(f'--- Validation {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 # calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
