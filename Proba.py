@@ -5,28 +5,6 @@ import ImportListing
 import time
 
 """
-This function goes through the whole calendar to add probability.
-Function we used : https://www.geogebra.org/calculator/rch5ctnn
-"""
-def AddingProba(calendar,filename):
-    listing = ImportListing.RetrieveListings(filename)
-    listing = listing.set_index('id')
-    calendar = calendar.sort_values(["listing_id","start_date"])         #To be sure that the calendar is sorted
-    probaCalendar = pd.DataFrame(columns=["proba"])
-    for index, row in calendar[:5000].iterrows():
-        tempProba = 0
-        if row["label"] != "A" or row["label"] != "MIN" or row["num_day"] < "MAX":
-            tempProba = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((row["num_day"]+202)/142,2))
-            tempProba = AdjustProbaInstantBooking(row, listing, tempProba)
-            tempProba = AdjustProbaByValidation(row, tempProba) 
-        if CheckIfLastPeriodIsClosed(calendar, index) == True:
-            tempProba = AdjustProbaLastPeriod(tempProba)
-        probaCalendar = probaCalendar.append({'proba':tempProba}, ignore_index=True, sort=False)
-    calendar = pd.concat([calendar, probaCalendar], axis=1)
-    return calendar
-
-
-"""
 This function adjusts the probability of one row based on the validation from Airbnb's reviews.
 """
 def AdjustProbaByValidation(row, adjustedProba):
@@ -66,13 +44,35 @@ def CheckIfLastPeriodIsClosed(calendar, index):
         return True
     return False
 
+"""
+Function we used : https://www.geogebra.org/calculator/rch5ctnn
+"""
+def CalculateProba(row,listing,calendar):
+    tempProba = 0
+    if row["label"] != "A" or row["label"] != "MIN" or row["num_day"] < "MAX":
+        tempProba = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((row["num_day"]+202)/142,2))
+        tempProba = AdjustProbaInstantBooking(row, listing, tempProba)
+        tempProba = AdjustProbaByValidation(row, tempProba) 
+    if CheckIfLastPeriodIsClosed(calendar, row.name) == True:
+        tempProba = AdjustProbaLastPeriod(tempProba)
+    return tempProba
 
+"""
+This function goes through the whole calendar to add probability.
+Function we used : https://www.geogebra.org/calculator/rch5ctnn
+"""
+def AddingProba(calendar,filename):
+    listing = ImportListing.RetrieveListings(filename)
+    listing = listing.set_index('id')
+    calendar = calendar.sort_values(["listing_id","start_date"])         #To be sure that the calendar is sorted
+    calendar['proba'] = calendar.apply(lambda x : CalculateProba(x,listing,calendar), axis=1)
+    return calendar
 
-calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-del calendar['Proba']
-start_time = time.time()
-res = AddingProba(calendar,"listings-2020-09")
-print("---  %s seconds ---" % (time.time() - start_time))
+# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+# del calendar['Proba']
+# start_time = time.time()
+# res = AddingProba(calendar,"listings-2020-09")
+# print("---  %s seconds ---" % (time.time() - start_time))
 # print(res)
 #AdjustProbaByValidation(row, tempProba)
 #FindLastPeriodClosed()
