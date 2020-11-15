@@ -35,15 +35,14 @@ to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(date,newCalendar):
+def Merging(date,new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
-
-    convertedQueryDate = dt.datetime.strptime(date.values[0],date_format).date()    
-    lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
+    
+    lastYearDate =  date - relativedelta.relativedelta(years=1)
 
     #get data from db and format
     res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "'")
@@ -51,7 +50,7 @@ def Merging(date,newCalendar):
 
     #if first calendar
     if old_calendar.empty:
-        to_insert = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
+        to_insert = new_calendar
     #typical use of the function
     else:
         print("Merging...")

@@ -8,6 +8,7 @@ import MergeCalendar
 import DatabaseConnector
 import Proba
 import datetime
+import pandas as pd
 from dateutil import relativedelta
 
 DATABASE_CALENDARS_COLUMNS = [
@@ -31,27 +32,30 @@ Process all the datasets and save te results in the database
 def ProcessDatasets(date):
     fileNameDate = str(date)[:7]
 
-    start_time = time.time()
-    print('------- Start of listings process -------')
-    ImportListing.ImportListings('listings-{fileNameDate}.csv')
-    print('------- End of listings process -------')
-    print("------------ %s seconds ------------" % (time.time() - start_time))
+    # start_time = time.time()
+    # print('------- Start of listings process -------')
+    # ImportListing.ImportListings(f'listings-{fileNameDate}')
+    # print('------- End of listings process -------')
+    # print("------------ %s seconds ------------" % (time.time() - start_time))
 
-    start_time = time.time()
-    print('------- Start of calendar process -------')
-    optimizedCalendar = OptimizeCalendar.OptimizeCalendar('calendar-'+fileNameDate)
-    optimizedCalendar.to_csv(f"./datasets/saved/opti_calendar-{fileNameDate}.csv")
-    mergedCalendar = MergeCalendar.Merging(date,optimizedCalendar)
-    labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
-    labelizedCalendar.to_csv(f"./datasets/saved/label_calendar-{fileNameDate}.csv")
-    print('------- End of calendar process -------')
-    print("------------ %s seconds ------------" % (time.time() - start_time))
+    # start_time = time.time()
+    # print('------- Start of calendar process -------')
+    # optimizedCalendar = OptimizeCalendar.OptimizeCalendar('calendar-'+fileNameDate)
+    # optimizedCalendar.to_csv(f"./datasets/saved/opti_calendar-{fileNameDate}.csv")
+    # mergedCalendar = MergeCalendar.Merging(date,optimizedCalendar)
+    # labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
+    # labelizedCalendar.to_csv(f"./datasets/saved/label_calendar-{fileNameDate}.csv")
+    # print('------- End of calendar process -------')
+    # print("------------ %s seconds ------------" % (time.time() - start_time))
+
+    
+    labelizedCalendar = pd.read_csv("./datasets/saved/label_calendar-2017-01.csv")
     
     start_time = time.time()
     print('------- Start of reviews process -------')
     validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
     validatedCalendar.to_csv(f"./datasets/saved/valid_calendar-{fileNameDate}.csv")
-    probaCalendar = Proba.AddingProba(validatedCalendar,'listings-'+fileNameDate+'.csv')
+    probaCalendar = Proba.AddingProba(validatedCalendar,f'listings-{fileNameDate}')
     probaCalendar.to_csv(f"./datasets/saved/proba_calendar-{fileNameDate}.csv")
     extValidatedCalendar = probaCalendar # A remove
     # extValidatedCalendar =  ValidateWithExternalReviews(probaCalendar)
@@ -76,7 +80,7 @@ def ProcessDate(date):
     elif hasDatasets:
         ProcessDatasets(date)
     else:
-        print(f'Cannot process this date : {date}')
+        print(f'Cannot process this date : {date.strftime("%Y-%m-%d")}')
 
 
 '''
@@ -89,8 +93,10 @@ def ProcessDaily():
 def ProcessDateRange(startDate,endDate):
     startDate = datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
     endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
-    while startDate <= endDate:
-        ProcessDate(startDate)
+    while startDate < endDate:
+        start_time = time.time()
+        # ProcessDate(startDate)
+        print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
 ProcessDateRange('2017-01-01','2017-04-01')

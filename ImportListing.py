@@ -27,14 +27,11 @@ DATABASE_LISTINGS_COLUMNS = [
     "availability_365",
     "calendar_last_scraped",
     "number_of_reviews",
-    "number_of_reviews_ltm",
-    "number_of_reviews_l30d",
     "first_review",
     "last_review",
     "license",
     "instant_bookable",
     "calculated_host_listings_count",
-    "calculated_host_listings_count_entire_homes",
     "reviews_per_month"
 ]
 
@@ -42,7 +39,7 @@ DATABASE_LISTINGS_COLUMNS = [
 Retrieve the listings file from de dataset folder
 '''   
 def RetrieveListings(filename):
-    listings = pd.read_csv('./datasets/listings/'+filename,sep=",")
+    listings = pd.read_csv('./datasets/listings/'+filename+'.csv',sep=",")
     return listings[DATABASE_LISTINGS_COLUMNS]
 
 '''

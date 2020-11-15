@@ -91,4 +91,4 @@ def DownloadAllDatesets(startDate,endDate=None):
         DownloadDate(startDate)
         startDate = startDate + relativedelta.relativedelta(days=1)
 
-DownloadAllDatesets('2017-01-01','2017-04-01')
+# DownloadAllDatesets('2017-01-01','2017-04-01')

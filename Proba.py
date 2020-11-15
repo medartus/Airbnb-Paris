@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import ImportListing
-
+import time
 
 """
 This function goes through the whole calendar to add probability.
@@ -13,7 +13,7 @@ def AddingProba(calendar,filename):
     listing = listing.set_index('id')
     calendar = calendar.sort_values(["listing_id","start_date"])         #To be sure that the calendar is sorted
     probaCalendar = pd.DataFrame(columns=["proba"])
-    for index, row in calendar.iterrows():
+    for index, row in calendar[:5000].iterrows():
         tempProba = 0
         if row["label"] != "A" or row["label"] != "MIN" or row["num_day"] < "MAX":
             tempProba = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((row["num_day"]+202)/142,2))
@@ -68,9 +68,11 @@ def CheckIfLastPeriodIsClosed(calendar, index):
 
 
 
-# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-# del calendar['Proba']
-# res = AddingProba(calendar,"listings-2020-09.csv")
+calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+del calendar['Proba']
+start_time = time.time()
+res = AddingProba(calendar,"listings-2020-09")
+print("---  %s seconds ---" % (time.time() - start_time))
 # print(res)
 #AdjustProbaByValidation(row, tempProba)
 #FindLastPeriodClosed()

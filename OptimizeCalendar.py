@@ -16,20 +16,21 @@ def OptimizeCalendar(filename):
 
     calendar = calendar.sort_values(by=["listing_id", "date"])
     calendar = calendar.reset_index()
-
+    
     # drop useless tables
-    calendar = calendar.drop(['price', 'index','adjusted_price'])
+    calendar = calendar.drop(list(set(['price','index','adjusted_price']) & set(calendar.columns)),axis=1)
+
+    if 'minimum_nights' not in calendar.columns:
+        calendar['minimum_nights'] = 0
+    if 'maximum_nights' not in calendar.columns:
+        calendar['maximum_nights'] = 1125
 
     # Group periods
     adj_check = (calendar.available != calendar.available.shift()).cumsum() # Avoid to grop no consecutive rows
     newData = pd.DataFrame(calendar.groupby(['listing_id','available',adj_check], as_index=False, sort=False).apply(groupDate))
 
     # Convert data into columns
-    newData[['start','end','num_day','minimum_nights','maximum_nights']] = pd.DataFrame(newData[0].to_list(), index= newData.index)
-
-    # # Convert type
-    # newData["start"] = pd.to_datetime(newData["start"])
-    # newData["end"] = pd.to_datetime(newData["end"])
+    newData[['start_date','end_date','num_day','minimum_nights','maximum_nights']] = pd.DataFrame(newData[0].to_list(), index=newData.index)
     
     # Remove index to have access to listing_id and available columns
     newData.index = newData.index.set_names(['listing_id', 'available','foo'])
@@ -40,6 +41,6 @@ def OptimizeCalendar(filename):
     return newData
 
 # start_time = time.time()
-# newData = OptimizeCalendar("calendar-2020-08")
+# newData = OptimizeCalendar("calendar-2017-01")
 # print("---  %s seconds ---" % (time.time() - start_time))
 # newData.to_csv("./datasets/altered/calendar_periods.csv",index=False)
