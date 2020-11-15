@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import os
 from datetime import timedelta
 
 '''
@@ -134,7 +135,7 @@ Given the calendar, and the review file name, it will sort reviews fields and ru
 '''
 def ValidateWithReviews(calendar,filename):
     # open files
-    reviews = pd.read_csv("./datasets/reviews/"+filename+".csv")
+    reviews = pd.read_csv("./datasets/reviews/reviews-"+filename+".csv")
 
     # optimize calendar data to process
     reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
@@ -142,6 +143,18 @@ def ValidateWithReviews(calendar,filename):
     # Execute validation
     return validateInternalCalendar(calendar,reviews)
     
+def ProcessAndSave(fileNameDate,SavedName,calendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = ValidateWithReviews(calendar,fileNameDate)
+        print(f'--- Validation {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        return df
+
 # calendar = pd.read_csv("./datasets/altered/labelized_calendar_periods.csv")
 # validated_calendar = ValidateWithReviews(calendar,"reviews-2020-09")
 # # Print and save result

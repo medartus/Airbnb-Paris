@@ -1,5 +1,5 @@
 import pandas as pd
-
+import time
 
 '''
 Apply labelization to a given line/period
@@ -35,11 +35,14 @@ def set_label(period):
 Apply labelization the each line of the dataset
 '''
 def labelize(calendar_per):
-    calendar_per['label'] = calendar_per.apply(lambda period: set_label(period), axis=1)
+    calendar_per['label'] = calendar_per.apply(set_label, axis=1)
     return calendar_per
 
 # calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
+# start_time = time.time()
 # labelized = labelize(calendar_per)
+# print("------------ %s seconds ------------" % (time.time() - start_time))
+# print(labelized)
 # labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv")
 
 # print(labelized)

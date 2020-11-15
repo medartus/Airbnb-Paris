@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import time
+import os
 
 '''
 Create the result for period grouping
@@ -12,7 +13,7 @@ def groupDate(group):
 Import the calendar dataset and group by open/closed period to remove useless data
 '''
 def OptimizeCalendar(filename):
-    calendar = pd.read_csv('./datasets/calendar/'+filename+'.csv',sep=",")
+    calendar = pd.read_csv('./datasets/calendar/calendar-'+filename+'.csv',sep=",")
 
     calendar = calendar.sort_values(by=["listing_id", "date"])
     calendar = calendar.reset_index()
@@ -39,6 +40,18 @@ def OptimizeCalendar(filename):
     del newData[0]
     
     return newData
+
+def ProcessAndSave(fileNameDate,SavedName):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = OptimizeCalendar(fileNameDate)
+        print(f'--- Optimizing {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        return df
 
 # start_time = time.time()
 # newData = OptimizeCalendar("calendar-2017-01")

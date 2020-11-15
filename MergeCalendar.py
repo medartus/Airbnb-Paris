@@ -3,6 +3,7 @@ import numpy as np
 import datetime as dt
 from dateutil import relativedelta
 import time
+import os
 from datetime import datetime, timedelta
 import DatabaseConnector
 
@@ -244,6 +245,17 @@ def UpdateByListingGroup(group):
         to_insert.append(remaining_date[1:-1] + ["f"])
     return None
 
+def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = Merging(date,newCalendar)
+        print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        return df
 
 #EXEMPLE
 #start_time = time.time()

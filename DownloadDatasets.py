@@ -14,7 +14,7 @@ Verify if a file exists in a specific folder
 def VerifyDatasetExists(datesetType,date):
     fileNameDate = str(date)[:7]
     fileName = datesetType+"-"+fileNameDate
-    exists = os.path.isfile("./datasets/"+datesetType+"/"+fileName+".csv") 
+    exists = os.path.isfile("./datasets/"+datesetType+"/"+fileName+".csv.gz") 
     if exists:
         print(f'------ {fileName} already exists ------')
     return exists
@@ -30,16 +30,13 @@ def FormatUrl(date,fileName):
 '''
 Download a dataset, unzip it, rename it and move it to a specific folder with the same other datasets
 '''  
-def DownloadFile(date,fileName):
+def DownloadFile(date,folderName):
     date = str(date)
-    url = FormatUrl(date,fileName)
+    url = FormatUrl(date,folderName)
+    fileName = folderName+'-'+str(date)[:7]
 
     try:
-        urllib.request.urlretrieve (url, "./datasets/"+fileName+"/"+fileName+".csv.gz")
-        with gzip.open('./datasets/'+fileName+'/'+fileName+'.csv.gz', 'rb') as f_in:
-            with open('./datasets/'+fileName+'/'+fileName+'-'+str(date)[:7]+'.csv', 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        os.remove('./datasets/'+fileName+'/'+fileName+'.csv.gz')
+        urllib.request.urlretrieve (url, "./datasets/"+folderName+"/"+fileName+".csv.gz")
         return True
     except:
         return False
@@ -69,8 +66,8 @@ def DownloadDate(date):
 '''
 Create the dataset folder if doesn't exists
 ''' 
-def createFolder():
-    for filename in datasets:
+def CreateFolder():
+    for fileName in datasets:
         try:
             os.mkdir('./datasets/'+fileName)
         except:
@@ -80,7 +77,7 @@ def createFolder():
 Download all the datasets from a specific starting date
 ''' 
 def DownloadAllDatesets(startDate,endDate=None):
-    createFolder()
+    CreateFolder()
     startDate = datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
     if endDate:
         endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
@@ -91,4 +88,4 @@ def DownloadAllDatesets(startDate,endDate=None):
         DownloadDate(startDate)
         startDate = startDate + relativedelta.relativedelta(days=1)
 
-# DownloadAllDatesets('2017-01-01','2017-04-01')
+# DownloadAllDatesets('2017-01-01','2020-11-15')

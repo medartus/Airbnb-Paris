@@ -1,3 +1,5 @@
+import os
+import gzip
 import time
 import ImportListing
 import OptimizeCalendar
@@ -6,10 +8,14 @@ import DownloadDatasets
 import Validation
 import MergeCalendar
 import DatabaseConnector
+import ConvertReviews
 import Proba
 import datetime
 import pandas as pd
 from dateutil import relativedelta
+import shutil
+
+datasets = ['listings','reviews','calendar']
 
 DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
@@ -27,42 +33,66 @@ DATABASE_CALENDARS_COLUMNS = [
 
 
 '''
+Create folder for saveing .csv
+'''
+def CreateFolder(folderName):
+    try:
+        os.mkdir(f'./datasets/{folderName}')
+    except:
+        pass
+
+def UnzipFiles(fileNameDate):
+    for folderName in datasets:
+        fileName = folderName + '-' +fileNameDate
+        with gzip.open('./datasets/'+folderName+'/'+fileName+'.csv.gz', 'rb') as f_in:
+            with open('./datasets/'+folderName+'/'+fileName+'.csv', 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+    if not os.path.isdir(f'./datasets/saved/{fileNameDate}'):
+        shutil.unpack_archive(f'./datasets/saved/{fileNameDate}.zip', f'./datasets/saved/{fileNameDate}', 'zip')  
+    
+def ZipSaved(fileNameDate):
+    shutil.make_archive(fileNameDate, 'zip', f'./datasets/saved/{fileNameDate}')
+    os.rmdir(f'./datasets/saved/{fileNameDate}')
+
+
+'''
 Process all the datasets and save te results in the database
 '''
 def ProcessDatasets(date):
     fileNameDate = str(date)[:7]
 
-    # start_time = time.time()
-    # print('------- Start of listings process -------')
-    # ImportListing.ImportListings(f'listings-{fileNameDate}')
-    # print('------- End of listings process -------')
-    # print("------------ %s seconds ------------" % (time.time() - start_time))
+    CreateFolder('saved')
+    CreateFolder(f'saved/{fileNameDate}')
 
-    # start_time = time.time()
-    # print('------- Start of calendar process -------')
-    # optimizedCalendar = OptimizeCalendar.OptimizeCalendar('calendar-'+fileNameDate)
-    # optimizedCalendar.to_csv(f"./datasets/saved/opti_calendar-{fileNameDate}.csv")
-    # mergedCalendar = MergeCalendar.Merging(date,optimizedCalendar)
-    # labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
-    # labelizedCalendar.to_csv(f"./datasets/saved/label_calendar-{fileNameDate}.csv")
-    # print('------- End of calendar process -------')
-    # print("------------ %s seconds ------------" % (time.time() - start_time))
+    UnzipFiles(fileNameDate)
 
-    
-    labelizedCalendar = pd.read_csv("./datasets/saved/label_calendar-2017-01.csv")
-    
+    start_time = time.time()
+    print('------- Start of listings process -------')
+    ImportListing.ImportListings(fileNameDate)
+    print('------- End of listings process -------')
+    print("------------ %s seconds ------------" % (time.time() - start_time))
+
+    start_time = time.time()
+    print('------- Start of calendar process -------')
+    optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
+    print(optimizedCalendar)
+    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',date,optimizedCalendar)
+    labelizedCalendar = LabelizePeriods.labelize(mergedCalendar)
+    print('------- End of calendar process -------')
+    print("------------ %s seconds ------------" % (time.time() - start_time))
+
     start_time = time.time()
     print('------- Start of reviews process -------')
-    validatedCalendar = Validation.ValidateWithReviews(labelizedCalendar,'reviews-'+fileNameDate)
-    validatedCalendar.to_csv(f"./datasets/saved/valid_calendar-{fileNameDate}.csv")
-    probaCalendar = Proba.AddingProba(validatedCalendar,f'listings-{fileNameDate}')
-    probaCalendar.to_csv(f"./datasets/saved/proba_calendar-{fileNameDate}.csv")
+    validatedCalendar = Validation.ProcessAndSave(fileNameDate,'validated_calendar',labelizedCalendar)
+    probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',validatedCalendar)
     extValidatedCalendar = probaCalendar # A remove
-    # extValidatedCalendar =  ValidateWithExternalReviews(probaCalendar)
+    # extValidatedCalendar =  ConvertReviews.ProcessAndSave(fileNameDate,'ext_validated_calendar',probaCalendar)
     listExtValidatedCalendar = extValidatedCalendar.values.tolist()
     DatabaseConnector.Insert(listExtValidatedCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
+
+    ZipSaved(fileNameDate)
 
 
 '''
@@ -95,7 +125,7 @@ def ProcessDateRange(startDate,endDate):
     endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
     while startDate < endDate:
         start_time = time.time()
-        # ProcessDate(startDate)
+        ProcessDate(startDate)
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 

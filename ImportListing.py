@@ -39,7 +39,7 @@ DATABASE_LISTINGS_COLUMNS = [
 Retrieve the listings file from de dataset folder
 '''   
 def RetrieveListings(filename):
-    listings = pd.read_csv('./datasets/listings/'+filename+'.csv',sep=",")
+    listings = pd.read_csv('./datasets/listings/listings-'+filename+'.csv',sep=",")
     return listings[DATABASE_LISTINGS_COLUMNS]
 
 '''

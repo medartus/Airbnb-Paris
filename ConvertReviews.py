@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 import time
+import os
 import Validation
 
 def RetrieveFile(filename):
@@ -107,6 +108,18 @@ def ValidateWithExternalReviews(calendar):
     groupedReviews = GroupReviews(date)
     groupedReviews['listing_id'] = groupedReviews['listing_id'].astype(int)
     return Validation.validateExternalCalendar(calendar,groupedReviews)
+
+def ProcessAndSave(fileNameDate,SavedName,calendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = AddingProba(calendar,fileNameDate)
+        print(f'--- External validation {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        return df
 
 # calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
 # res = ValidateWithExternalReviews(calendar)

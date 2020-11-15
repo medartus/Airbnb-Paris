@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 import ImportListing
 import time
+import os
 
 """
 This function adjusts the probability of one row based on the validation from Airbnb's reviews.
@@ -67,6 +68,19 @@ def AddingProba(calendar,filename):
     calendar = calendar.sort_values(["listing_id","start_date"])         #To be sure that the calendar is sorted
     calendar['proba'] = calendar.apply(lambda x : CalculateProba(x,listing,calendar), axis=1)
     return calendar
+
+
+def ProcessAndSave(fileNameDate,SavedName,calendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = AddingProba(calendar,fileNameDate)
+        print(f'--- Proba {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index_col = False)
+        return df
 
 # calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
 # del calendar['Proba']
