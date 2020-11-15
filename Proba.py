@@ -19,7 +19,7 @@ This function checks if the reservation is available for instant booking.
 """
 def AdjustProbaInstantBooking(row, listing, adjustedProba):
     try:
-        if listing.loc[row["listing_id"]]["instant_bookable"] == 't':
+        if listing.at[row["listing_id"],"instant_bookable"] == 't':
             adjustedProba += (1-adjustedProba)*0.3              #The formula is likely to change
     except:
         pass
@@ -41,7 +41,7 @@ As the calendar is sorted by listing_id and start_date, we can assume the last p
 def CheckIfLastPeriodIsClosed(calendar, index):
     if index+1 == calendar.shape[0]:
         return True
-    if calendar.iloc[index]['listing_id'] != calendar.iloc[index+1]['listing_id']:
+    if calendar.at[index,'listing_id'] != calendar.at[index+1,'listing_id']:
         return True
     return False
 
@@ -56,7 +56,7 @@ def CalculateProba(row,listing,calendar):
         tempProba = AdjustProbaByValidation(row, tempProba) 
     if CheckIfLastPeriodIsClosed(calendar, row.name) == True:
         tempProba = AdjustProbaLastPeriod(tempProba)
-    return tempProba
+    return round(tempProba,2)
 
 """
 This function goes through the whole calendar to add probability.
@@ -82,10 +82,9 @@ def ProcessAndSave(fileNameDate,SavedName,calendar):
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
-# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-# del calendar['Proba']
+# calendar = pd.read_csv("./datasets/saved/2017-01/validated_calendar-2017-01.csv")
 # start_time = time.time()
-# res = AddingProba(calendar,"listings-2020-09")
+# res = AddingProba(calendar,"2017-01")
 # print("---  %s seconds ---" % (time.time() - start_time))
 # print(res)
 #AdjustProbaByValidation(row, tempProba)

@@ -77,7 +77,7 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',date,optimizedCalendar)
+    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
@@ -86,8 +86,7 @@ def ProcessDatasets(date):
     print('------- Start of reviews process -------')
     validatedCalendar = Validation.ProcessAndSave(fileNameDate,'validated_calendar',labelizedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',validatedCalendar)
-    extValidatedCalendar = probaCalendar # A remove
-    # extValidatedCalendar =  ConvertReviews.ProcessAndSave(fileNameDate,'ext_validated_calendar',probaCalendar)
+    extValidatedCalendar =  ConvertReviews.ProcessAndSave(fileNameDate,'ext_validated_calendar',probaCalendar)
     listExtValidatedCalendar = extValidatedCalendar.values.tolist()
     DatabaseConnector.Insert(listExtValidatedCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of reviews process -------')

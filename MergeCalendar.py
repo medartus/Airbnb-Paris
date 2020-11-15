@@ -7,13 +7,6 @@ import os
 from datetime import datetime, timedelta
 import DatabaseConnector
 
-import csv 
-def save_to_file(data, name):
-    with open(name, 'w') as f: 
-        # using csv.writer method from CSV package 
-        write = csv.writer(f) 
-        write.writerows(data) 
-
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
 DATABASE_CALENDARS_COLUMNS = [
@@ -36,14 +29,15 @@ to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(date,new_calendar):
+def Merging(new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
     
-    lastYearDate =  date - relativedelta.relativedelta(years=1)
+    minDate = new_calendar['start_date'].min()
+    lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(years=1)
 
     #get data from db and format
     res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "'")
@@ -68,9 +62,6 @@ def Merging(date,new_calendar):
 def MergeTwoCalendars(old_calendar,new_calendar):
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"
-
-    #rename columns so concat of both cal can be done
-    new_calendar = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
 
     #joining both calendars
     concat_cal = pd.concat([old_calendar,new_calendar])
@@ -245,14 +236,14 @@ def UpdateByListingGroup(group):
         to_insert.append(remaining_date[1:-1] + ["f"])
     return None
 
-def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
+def ProcessAndSave(fileNameDate,SavedName,newCalendar):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = Merging(date,newCalendar)
+        df = Merging(newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
