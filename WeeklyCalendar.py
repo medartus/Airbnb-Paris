@@ -39,8 +39,8 @@ def PreprocessCalendar(df):
 	    real_df = pd.DataFrame(new_result, columns=["listing_id","available","start","end","num_day","minimum_nights","maximum_nights"])
 	return new_result
 
-df = pd.read_excel("airbnb_calendriers.xlsx")
-New_Calendar = PreprocessCalendar(df)
+# df = pd.read_excel("airbnb_calendriers.xlsx")
+# New_Calendar = PreprocessCalendar(df)
 
 #appliquer LabelizePeriods.py ? #Comment appliquer un label sans min et max nights? Pourquoi y a -t-il plus de 365 jours ? 
 #listing_id bien récpuéré? est-ce les mêmes que les notre? Est-ce que ça change ? 

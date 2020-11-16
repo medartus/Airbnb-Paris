@@ -3,15 +3,9 @@ import numpy as np
 import datetime as dt
 from dateutil import relativedelta
 import time
+import os
 from datetime import datetime, timedelta
 import DatabaseConnector
-
-import csv 
-def save_to_file(data, name):
-    with open(name, 'w') as f: 
-        # using csv.writer method from CSV package 
-        write = csv.writer(f) 
-        write.writerows(data) 
 
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
@@ -24,9 +18,7 @@ DATABASE_CALENDARS_COLUMNS = [
     "num_day",
     "minimum_nights",
     "maximum_nights",
-    "label",
-    "validation",
-    "proba"
+    "label"
 ]
 
 to_insert = []
@@ -34,60 +26,40 @@ to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(filename):
+def Merging(date,new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
-
-    #lecture du nouveau cal
-    new_calendar = pd.read_csv(filename,sep = ",")
-    new_calendar = new_calendar.sort_values(["listing_id","start"])
-    date = new_calendar[:1].start
-    convertedQueryDate = dt.datetime.strptime(date.values[0],date_format).date()    
-    lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
-
+    
+    # minDate = new_calendar['start_date'].min()
+    # lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(months=1)
+    
     #get data from db and format
-    res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(date) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
     if old_calendar.empty:
-        new_calendar = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
-        new_calendar = new_calendar[["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label"]]
-        new_calendar["validation"] = "f"
-        new_calendar["proba"] = -1
-        to_insert = new_calendar.values.tolist()
-
+        to_insert = new_calendar
     #typical use of the function
     else:
-        print("Merging...")
-        to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)  
-        print("Merging OK !")
-        print("Deleting...")    
+        to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
         DatabaseConnector.CalendarDelete(to_delete)
-        print("Deleting OK ! ")
-        to_insert = pd.DataFrame(to_insert)
-        to_insert.columns = ["listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","validation"]
-        to_insert["proba"] = -1
-        to_insert = to_insert.values.tolist()
-    print("Insert into DB...")
-    DatabaseConnector.CalendarInsert(to_insert)
-    print("Insert done ! ")
-    return True
+        to_insert = pd.DataFrame(to_insert,columns=DATABASE_CALENDARS_COLUMNS[1:])
+
+    return to_insert
 
 
 def MergeTwoCalendars(old_calendar,new_calendar):
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"
 
-    #rename columns so concat of both cal can be done
-    new_calendar = new_calendar.rename(columns = {"start":"start_date", "end":"end_date"})
-
     #joining both calendars
-    concat_cal = pd.concat([old_calendar,new_calendar])
-    concat_cal = concat_cal[["cal_key","listing_id","available","start_date","end_date","num_day","minimum_nights","maximum_nights","label","state"]]
+    concat_cal = pd.concat([old_calendar,new_calendar],sort=False)
+    concat_cal = concat_cal[DATABASE_CALENDARS_COLUMNS + ["state"]]
 
     #Sort par annonce et date 
     concat_cal = concat_cal.sort_values(["listing_id","start_date"])
@@ -140,7 +112,7 @@ def UpdateByListingGroup(group):
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
-            temp = group[u][1:-1] + ["f"]
+            temp = group[u][1:-1]
             to_insert.append(temp)
         return None    
     #################################################   
@@ -149,8 +121,8 @@ def UpdateByListingGroup(group):
     #Otherwise we iterate through all of the old to check if there's a         
     for i in range(number_of_lines_to_update):
         j = 0
-            
-        while(group[j][9] == "new"):
+
+        while(group[j][8] == "new"):
             j+=1
         
         old_to_update = group.pop(j)
@@ -212,8 +184,8 @@ def UpdateByListingGroup(group):
                         
                         second_period[5] = nb_days(second_period[4],second_period[3])
                                                 
-                        new_periods.append(first_period[1:-1] + ["f"])
-                        new_periods.append(second_period[1:-1] + ["f"])
+                        new_periods.append(first_period[1:-1])
+                        new_periods.append(second_period[1:-1])
                         
                     #case left extend
                     else:
@@ -223,8 +195,8 @@ def UpdateByListingGroup(group):
                         first_period[5] = nb_days(first_period[3],first_period[4])
                         second_period = old_to_update.copy()
 
-                        new_periods.append(first_period[1:-1] + ["f"])
-                        new_periods.append(second_period[1:-1] + ["f"])
+                        new_periods.append(first_period[1:-1])
+                        new_periods.append(second_period[1:-1])
 
                 #Case where there's an extension with no similar bounds for both start and end date
                 elif(new_date_end > old_date_end):
@@ -237,10 +209,10 @@ def UpdateByListingGroup(group):
                     second_period[3] = (old_date_end+timedelta(days=1)).strftime(date_format)
                     second_period[5] = nb_days(second_period[4],second_period[3])
                     
-                    new_periods.append(first_period[1:-1] + ["f"])
+                    new_periods.append(first_period[1:-1])
                     group.append(second_period)
                 else:
-                    new_periods.append(group[k][1:-1] +["f"])
+                    new_periods.append(group[k][1:-1])
                 
         #Append all old dates to delete that had an intersection with new dates
         if has_intersect:
@@ -248,16 +220,27 @@ def UpdateByListingGroup(group):
             
         #append all new periods we created
         for period in new_periods:
-            to_insert.append(period[:-1] + ["f"])
+            to_insert.append(period[:-1])
         for l in range(k):
             group.pop(0)
 
     #Verifier qu'on ne finit pas en laissant des dates "new" qui sont simplement en dehors de toute intersection avec les dates "old"
     #Cas : Old : du 20 janvier au 21 janvier , New : du 22 janvier au 23 janvier, Old : du 24 janvier au 26 janvier
     for remaining_date in group:
-        to_insert.append(remaining_date[1:-1] + ["f"])
+        to_insert.append(remaining_date[1:-1])
     return None
 
+def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
+    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    if exists:
+        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+    else:
+        start_time = time.time()
+        df = Merging(date,newCalendar)
+        print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
+        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        return df
 
 #EXEMPLE
 #start_time = time.time()

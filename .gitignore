@@ -1,6 +1,7 @@
 *.csv
 *.xlsx
-*.csv
+*.gz
+*.zip
 !mysql/airbnb/
 .ipynb_checkpoints/
 *.env

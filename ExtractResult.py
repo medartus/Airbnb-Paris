@@ -14,6 +14,27 @@ DATABASE_CALENDARS_COLUMNS = [
     "label",
     "validation",
 	"proba"
+    # "ext_validation"
+]
+
+DATABASE_RESULTS_COLUMNS = [
+	"extraction_date",
+    "listing_id",
+	"past12_m50",
+	"past12_m75",
+    "past12_m95",
+	"past12_m100",
+	"past12_m95_e75",
+	"past12_m100_e75",
+	"civil_m50",
+	"civil_m75",
+    "civil_m95",
+	"civil_m100",
+	"civil_m95_e75",
+	"civil_m100_e75",
+	"predict_m50",
+    "predict_m75",
+	"predict_m95"
 ]
 
 '''
@@ -34,7 +55,8 @@ def RetrieveData(queryDate):
     lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
 
     # Query the database
-    res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "' and start_date <= '" + str(nextMonthDate) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '{str(lastYearDate)}' and start_date <= '{str(nextMonthDate)}'")
     df = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
     return df
 
@@ -44,10 +66,15 @@ Create the estimated columns with the different probability aggregates
 '''
 def EstimateTimeRented(dataframe, dataframeName, isPast = True):
     tot = dataframe.groupby('listing_id').num_day.sum().rename(dataframeName+"_tot")
+    m50 = dataframe[dataframe.proba >= 0.5].groupby('listing_id').num_day.sum().rename(dataframeName+"_m50")
+    m75 = dataframe[dataframe.proba >= 0.75].groupby('listing_id').num_day.sum().rename(dataframeName+"_m75")
     m95 = dataframe[dataframe.proba >= 0.95].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95")
     m100 = dataframe[dataframe.proba == 1.0].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100")
 
-    res = [tot, m95, m100] if isPast else [tot, m95]
+    # m95_e75 = dataframe[(dataframe.proba >= 0.95) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95_e75")
+    # m100_e75 = dataframe[(dataframe.proba == 1.0) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100_e75")
+
+    res = [tot, m50, m75, m95, m100] if isPast else [tot, m50, m75, m95]
 
     return pd.concat(res, axis=1)
 
@@ -89,7 +116,22 @@ def ExportResult(queryDate):
 
     return pd.concat([estimatedPast12, estimatedCivil, estimatedPredict], axis=1).fillna(0).astype(int)
 
-queryDate = '2020-09-28'
+def SaveResult(queryDate, result, exportFormatList, filename=None):
+    for exportFormat in exportFormatList:
+        if exportFormat == "csv":
+            result.to_csv(f"./datasets/altered/{filename}.csv")
+        if exportFormat == "excel":
+            result.to_excel(f"./datasets/altered/{filename}.xlsx")
+        if exportFormat == "database":
+            result['extraction_date'] = queryDate
+            listResult = result.values.tolist()
+            DatabaseConnector.Execute(f'DELETE FROM results WHERE extraction_date = {queryDate}')
+            DatabaseConnector.Insert(listResult,'results',DATABASE_RESULTS_COLUMNS)
+
+queryDate = '2018-12-01'
 result = ExportResult(queryDate)
-# result.to_csv("./datasets/altered/plop.csv")
-result.to_excel("./datasets/altered/plop.xlsx")
+SaveResult(queryDate,result,['csv','excel'],'TestExport')
+# queryDate = '2020-09-28'
+# result = ExportResult(queryDate)
+# # result.to_csv("./datasets/altered/plop.csv")
+# result.to_excel("./datasets/altered/plop.xlsx")
