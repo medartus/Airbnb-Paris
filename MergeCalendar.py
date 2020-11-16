@@ -26,19 +26,19 @@ to_delete = []
 #Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 #Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(new_calendar):
+def Merging(date,new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
     
-    minDate = new_calendar['start_date'].min()
-    lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(years=1)
+    # minDate = new_calendar['start_date'].min()
+    # lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(months=1)
     
     #get data from db and format
     requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
-    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(lastYearDate) + "'")
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(date) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
@@ -230,14 +230,14 @@ def UpdateByListingGroup(group):
         to_insert.append(remaining_date[1:-1])
     return None
 
-def ProcessAndSave(fileNameDate,SavedName,newCalendar):
+def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = Merging(newCalendar)
+        df = Merging(date,newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df

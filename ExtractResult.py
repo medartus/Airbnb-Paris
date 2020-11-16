@@ -13,8 +13,8 @@ DATABASE_CALENDARS_COLUMNS = [
     "maximum_nights",
     "label",
     "validation",
-	"proba",
-    "ext_validation"
+	"proba"
+    # "ext_validation"
 ]
 
 DATABASE_RESULTS_COLUMNS = [
@@ -55,7 +55,8 @@ def RetrieveData(queryDate):
     lastYearDate =  convertedQueryDate - relativedelta.relativedelta(years=1)
 
     # Query the database
-    res = DatabaseConnector.Execute("SELECT * FROM calendars where end_date >= '" + str(lastYearDate) + "' and start_date <= '" + str(nextMonthDate) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '{str(lastYearDate)}' and start_date <= '{str(nextMonthDate)}'")
     df = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
     return df
 
@@ -70,10 +71,10 @@ def EstimateTimeRented(dataframe, dataframeName, isPast = True):
     m95 = dataframe[dataframe.proba >= 0.95].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95")
     m100 = dataframe[dataframe.proba == 1.0].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100")
 
-    m95_e75 = dataframe[(dataframe.proba >= 0.95) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95_e75")
-    m100_e75 = dataframe[(dataframe.proba == 1.0) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100_e75")
+    # m95_e75 = dataframe[(dataframe.proba >= 0.95) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m95_e75")
+    # m100_e75 = dataframe[(dataframe.proba == 1.0) & (dataframe.ext_validation >= 0.75)].groupby('listing_id').num_day.sum().rename(dataframeName+"_m100_e75")
 
-    res = [tot, m50, m75, m95, m100, m95_e75, m100_e75] if isPast else [tot, m50, m75, m95]
+    res = [tot, m50, m75, m95, m100] if isPast else [tot, m50, m75, m95]
 
     return pd.concat(res, axis=1)
 
@@ -127,7 +128,9 @@ def SaveResult(queryDate, result, exportFormatList, filename=None):
             DatabaseConnector.Execute(f'DELETE FROM results WHERE extraction_date = {queryDate}')
             DatabaseConnector.Insert(listResult,'results',DATABASE_RESULTS_COLUMNS)
 
-
+queryDate = '2018-12-01'
+result = ExportResult(queryDate)
+SaveResult(queryDate,result,['csv','excel'],'TestExport')
 # queryDate = '2020-09-28'
 # result = ExportResult(queryDate)
 # # result.to_csv("./datasets/altered/plop.csv")

@@ -78,7 +78,7 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
+    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',date,optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
@@ -131,4 +131,4 @@ def ProcessDateRange(startDate,endDate):
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
-ProcessDateRange('2017-04-01','2019-01-01')
+ProcessDateRange('2017-01-01','2019-01-01')
