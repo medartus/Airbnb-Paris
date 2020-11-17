@@ -88,4 +88,6 @@ def DownloadAllDatesets(startDate,endDate=None):
         DownloadDate(startDate)
         startDate = startDate + relativedelta.relativedelta(days=1)
 
-# DownloadAllDatesets('2017-01-01','2020-11-15')
+
+if __name__ == "__main__":
+    DownloadAllDatesets('2018-08-01','2018-09-01')
