@@ -34,7 +34,7 @@ def CreateValidationTable(memo, validationList, row):
     return validationList
     
 def GetValidationId():
-    link = ProcessLink()
+    link = ProcessLink()[:5000]
     memo = {}
     validationList = np.array([])
     start_time = time.time()
@@ -69,8 +69,8 @@ def ProcessReviews(date):
 
 def ProcessAbritel(date):
     abritel = RetrieveFile('abritel')
-    abritel = abritel.drop(['abr_detailpageurl','com_arrivaldate', 'com_reviewlanguage','com_nickname','com_dte_cre','com_headline','com_body'], axis=1)
-    abritel = abritel.rename({"com_listingid":"id","com_datepublished":"date_com"},axis=1)
+    abritel = abritel.drop(['abr_detailpageurl','com_datepublished', 'com_reviewlanguage','com_nickname','com_dte_cre','com_headline','com_body'], axis=1)
+    abritel = abritel.rename({"com_listingid":"id","com_arrivaldate":"date_com"},axis=1) # Here date com is date of arrival
     abritel['date_com'] =  pd.to_datetime(abritel['date_com'], format='%d/%m/%Y')
     abritel['id'] = abritel['id'].astype(str)
     abritel['src'] = 'Abritel'
@@ -117,7 +117,7 @@ def ValidateWithExternalReviews(calendar):
     groupedReviews['listing_id'] = groupedReviews['listing_id'].astype(int)
     groupedReviews['corresp'] = groupedReviews['corresp'].astype(int)
     groupedReviews['corresp'] = groupedReviews['corresp']/100
-    # return Validation.validateExternalCalendar(calendar,groupedReviews)
+    return Validation.validateExternalCalendar(calendar,groupedReviews)
 
 def ProcessAndSave(fileNameDate,SavedName,calendar):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 

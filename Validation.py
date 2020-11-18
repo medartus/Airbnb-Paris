@@ -39,7 +39,7 @@ def validate_internal_period(review, calendar):
     except:
         return calendar
     validations = validations[validations.validation == False]
-    validations = validations.iloc[validations.index.searchsorted(review.date-timedelta(days=13)): validations.index.searchsorted(review.date+timedelta(days=1))]
+    validations = validations.iloc[validations.index.searchsorted(review.date-timedelta(days=15)): validations.index.searchsorted(review.date+timedelta(days=1))]
 
     # if there is validations, mark the shortest period as validated
     if not validations.empty:
@@ -93,7 +93,10 @@ def validate_external_period(review, calendar):
     except:
         return calendar
     validations = validations[validations.ext_validation < review.corresp]
-    validations = validations.iloc[validations.index.searchsorted(review.date-timedelta(days=13)): validations.index.searchsorted(review.date+timedelta(days=1))]
+    if review.src == 'Airbnb':
+        validations = validations.iloc[validations.index.searchsorted(review.date-timedelta(days=15)): validations.index.searchsorted(review.date+timedelta(days=1))]
+    if review.src == 'Abritel':
+        validations = validations[validations.start_date == review.date]
 
     # if there is validations, mark the shortest period as validated
     if not validations.empty:
@@ -165,7 +168,7 @@ def ProcessAndSave(fileNameDate,SavedName,calendar):
 
 if __name__ == "__main__":
 
-    period = "2018-08"
+    period = "2017-02"
     calendar = pd.read_csv("./datasets/saved/"+period+"/labelized_calendar-"+period+".csv")
 
     start_time = time.time()
