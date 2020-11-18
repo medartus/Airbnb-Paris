@@ -115,7 +115,6 @@ def validateExternalCalendar(calendar, reviews):
     last_day = get_last_day(calendar)
     reviews = sort_reviews(reviews, last_day)
 
-
     calendar['period_id'] = calendar.index
 
     newCalendar = calendar[(calendar['end_date'] <= reviews['date'].max())]

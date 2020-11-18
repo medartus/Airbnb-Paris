@@ -34,7 +34,7 @@ def CreateValidationTable(memo, validationList, row):
     return validationList
     
 def GetValidationId():
-    link = ProcessLink()[:5000]
+    link = ProcessLink()
     memo = {}
     validationList = np.array([])
     start_time = time.time()
