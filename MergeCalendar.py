@@ -75,8 +75,6 @@ def MergeTwoCalendars(old_calendar,new_calendar):
     #On retourne une liste que l'on va traiter par la suite
     concat_cal.cal_key = concat_cal.cal_key.fillna(0)
     concat_cal.cal_key = concat_cal.cal_key.astype(int)
-
-    concat_cal = concat_cal[concat_cal.listing_id == 11848]
     concat_cal.groupby("listing_id").apply(UpdateByListingGroup)
 
     return to_insert,to_delete
@@ -109,12 +107,6 @@ def UpdateByListingGroup(group):
     
     #Boolean variable to check wether the old dates are intersecting with new dates or not. If not, they aren't deleted in the database
     has_intersect = True
-    '''for i in range(len(tab)):
-        if tab[i][9] == "old":
-            for j in range(1,len(tab)-i):
-                if (tab[i][4]<tab[i+j][3] and tab[i+j][8] == "new"):#check si c'est dans les bornes
-                    del group[group.start_date == tab[i][3]]'''
-        ##Les date sont converties en timestamp après cette ligne 
     #If this is a new announce, we can't compare old with new, we just append all in the result ! 
     #################################################
     if(number_of_lines_to_update == 0):
