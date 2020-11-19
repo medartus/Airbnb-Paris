@@ -5,6 +5,7 @@ from dateutil import relativedelta
 import time
 import os
 from datetime import datetime, timedelta
+import DatabaseConnector
 
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
@@ -32,12 +33,14 @@ def Merging(date,new_calendar):
     to_insert = []
     to_delete = []
     
-    # minDate = new_calendar['start_date'].min()
-    # lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(months=1)
+    fileNameDate =  date - relativedelta.relativedelta(months=1)
+    reviews = pd.read_csv('./datasets/reviews/reviews-'+str(fileNameDate)[:7]+'.csv',sep=",")
+    maxDate = reviews['date'].max()
+    lastMonthDate = dt.datetime.strptime(maxDate, date_format) + relativedelta.relativedelta(days=1)
     
     #get data from db and format
-    requestedColumns = FormatInsert(DATABASE_CALENDARS_COLUMNS)
-    res = Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(date) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(lastMonthDate) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
@@ -46,7 +49,7 @@ def Merging(date,new_calendar):
     #typical use of the function
     else:
         to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
-        #CalendarDelete(to_delete)
+        DatabaseConnector.CalendarDelete(to_delete)
         to_insert = pd.DataFrame(to_insert,columns=DATABASE_CALENDARS_COLUMNS[1:])
 
     return to_insert
@@ -55,12 +58,13 @@ def Merging(date,new_calendar):
 def MergeTwoCalendars(old_calendar,new_calendar):
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"
+
     #Converting dates    
     old_calendar['start_date'] = pd.to_datetime(old_calendar.start_date)
     old_calendar['end_date'] = pd.to_datetime(old_calendar.end_date)
     new_calendar['start_date'] = pd.to_datetime(new_calendar.start_date)
     new_calendar['end_date'] = pd.to_datetime(new_calendar.end_date)
-    
+
     #joining both calendars
     concat_cal = pd.concat([old_calendar,new_calendar],sort=False)
     concat_cal = concat_cal[DATABASE_CALENDARS_COLUMNS + ["state"]]
@@ -126,7 +130,6 @@ def UpdateByListingGroup(group):
             first_new = group[i]
             beginning_date_of_new_calendar = group[i][3]
             break
-    print(beginning_date_of_new_calendar)
     #remove all periods that end before the new cal
     for i in reversed(range(len(group))):
         if (group[i][4] < beginning_date_of_new_calendar):

@@ -14,6 +14,7 @@ import datetime
 import pandas as pd
 from dateutil import relativedelta
 import shutil
+from datetime import timedelta
 
 datasets = ['listings','reviews','calendar']
 
@@ -41,21 +42,31 @@ def CreateFolder(folderName):
     except:
         pass
 
-def UnzipFiles(fileNameDate):
-    for folderName in datasets:
-        fileName = folderName + '-' +fileNameDate
-        with gzip.open('./datasets/'+folderName+'/'+fileName+'.csv.gz', 'rb') as f_in:
-            with open('./datasets/'+folderName+'/'+fileName+'.csv', 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
+def UnzipFiles(date):
+    for i in range(2):
+        newDate = date-relativedelta.relativedelta(months=i)
+        fileNameDate = str(newDate)[:7]
+        for folderName in datasets:
+            if newDate == date or (newDate < date and folderName == "reviews") :
+                fileName = folderName + '-' +fileNameDate
+                with gzip.open('./datasets/'+folderName+'/'+fileName+'.csv.gz', 'rb') as f_in:
+                    with open('./datasets/'+folderName+'/'+fileName+'.csv', 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+    fileNameDate = str(date)[:7]
     if os.path.isfile(f'./datasets/saved/{fileNameDate}.zip'):
         shutil.unpack_archive(f'./datasets/saved/{fileNameDate}.zip', f'./datasets/saved/{fileNameDate}', 'zip')  
     
-def CleanProcess(fileNameDate):
+def CleanProcess(date):
+    for i in range(2):        
+        newDate = date-relativedelta.relativedelta(months=i)
+        fileNameDate = str(newDate)[:7]
+        for folderName in datasets:
+            if newDate == date or (newDate < date and folderName == "reviews") :
+                fileName = folderName + '-' +fileNameDate
+                os.remove('./datasets/'+folderName+'/'+fileName+'.csv')
+    fileNameDate = str(date)[:7]
     shutil.make_archive(f'./datasets/saved/{fileNameDate}', 'zip', f'./datasets/saved/{fileNameDate}')
     shutil.rmtree(f'./datasets/saved/{fileNameDate}')
-    for folderName in datasets:
-        fileName = folderName + '-' +fileNameDate
-        os.remove('./datasets/'+folderName+'/'+fileName+'.csv')
 
 
 '''
@@ -67,7 +78,7 @@ def ProcessDatasets(date):
     CreateFolder('saved')
     CreateFolder(f'saved/{fileNameDate}')
 
-    UnzipFiles(fileNameDate)
+    UnzipFiles(date)
 
     start_time = time.time()
     print('------- Start of listings process -------')
@@ -93,7 +104,7 @@ def ProcessDatasets(date):
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
-    CleanProcess(fileNameDate)
+    CleanProcess(date)
 
 
 '''
@@ -131,4 +142,4 @@ def ProcessDateRange(startDate,endDate):
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
-ProcessDateRange('2017-01-01','2019-01-01')
+ProcessDateRange('2017-02-01','2017-03-01')
