@@ -100,19 +100,26 @@ def UpdateByListingGroup(group):
 
     #getting the number of old values that we need to update
     number_of_lines_to_update = group[group.state == "old"].shape[0]
-
+    number_of_new_lines = group[group.state == "new"].shape[0]
+    no_new_lines = False
     #converting to list
     group = group.values.tolist()
    
     
     #Boolean variable to check wether the old dates are intersecting with new dates or not. If not, they aren't deleted in the database
     has_intersect = True
+
+    
     #If this is a new announce, we can't compare old with new, we just append all in the result ! 
     #################################################
-    if(number_of_lines_to_update == 0):
+    if(number_of_lines_to_update == 0 or number_of_new_lines == 0):
+        print(group)
+        no_new_lines = True
         for u in range(len(group)):
             temp = group[u][1:-1]
             to_insert.append(temp)
+            if(no_new_lines):
+                to_delete.append(temp)
         return None    
     #################################################  
     
