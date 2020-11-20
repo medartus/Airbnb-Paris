@@ -126,23 +126,23 @@ def UpdateByListingGroup(group):
             first_new = group[i]
             beginning_date_of_new_calendar = group[i][3]
             break
-    print(beginning_date_of_new_calendar)
-    #remove all periods that end before the new cal
-    for i in reversed(range(len(group))):
-        if (group[i][4] < beginning_date_of_new_calendar):
-            group.pop(i)
-            number_of_lines_to_update -= 1
-        elif group[i][9] == "old":
-            first_old = group[i].copy()
-    
-    if (first_old[3] != first_new[3]):
-        buffer_period = first_new.copy()
-        buffer_period[3] = first_old[3]
-        buffer_period[4] = first_new[3]-timedelta(days=1)
-        buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
-        to_insert.append(buffer_period[1:-1])
+    if(beginning_date_of_new_calendar != None):
+        #remove all periods that end before the new cal
+        for i in reversed(range(len(group))):
+            if (group[i][4] < beginning_date_of_new_calendar):
+                group.pop(i)
+                number_of_lines_to_update -= 1
+            elif group[i][9] == "old":
+                first_old = group[i].copy()
 
-    #Otherwise we iterate through all of the old to check if there's a         
+        if (first_old[3] != first_new[3]):
+            buffer_period = first_new.copy()
+            buffer_period[3] = first_old[3]
+            buffer_period[4] = first_new[3]-timedelta(days=1)
+            buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
+            to_insert.append(buffer_period[1:-1])
+
+    #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
     for i in range(number_of_lines_to_update):
         j = 0
 
