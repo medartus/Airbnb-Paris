@@ -104,19 +104,26 @@ def UpdateByListingGroup(group):
 
     #getting the number of old values that we need to update
     number_of_lines_to_update = group[group.state == "old"].shape[0]
-
+    number_of_new_lines = group[group.state == "new"].shape[0]
+    no_new_lines = False
     #converting to list
     group = group.values.tolist()
    
     
     #Boolean variable to check wether the old dates are intersecting with new dates or not. If not, they aren't deleted in the database
     has_intersect = True
+
+    
     #If this is a new announce, we can't compare old with new, we just append all in the result ! 
     #################################################
-    if(number_of_lines_to_update == 0):
+    if(number_of_lines_to_update == 0 or number_of_new_lines == 0):
+        print(group)
+        no_new_lines = True
         for u in range(len(group)):
             temp = group[u][1:-1]
             to_insert.append(temp)
+            if(no_new_lines):
+                to_delete.append(temp)
         return None    
     #################################################  
     
@@ -130,22 +137,23 @@ def UpdateByListingGroup(group):
             first_new = group[i]
             beginning_date_of_new_calendar = group[i][3]
             break
-    #remove all periods that end before the new cal
-    for i in reversed(range(len(group))):
-        if (group[i][4] < beginning_date_of_new_calendar):
-            group.pop(i)
-            number_of_lines_to_update -= 1
-        elif group[i][9] == "old":
-            first_old = group[i].copy()
-    
-    if (first_old[3] != first_new[3]):
-        buffer_period = first_new.copy()
-        buffer_period[3] = first_old[3]
-        buffer_period[4] = first_new[3]-timedelta(days=1)
-        buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
-        to_insert.append(buffer_period[1:-1])
+    if(beginning_date_of_new_calendar != None):
+        #remove all periods that end before the new cal
+        for i in reversed(range(len(group))):
+            if (group[i][4] < beginning_date_of_new_calendar):
+                group.pop(i)
+                number_of_lines_to_update -= 1
+            elif group[i][9] == "old":
+                first_old = group[i].copy()
 
-    #Otherwise we iterate through all of the old to check if there's a         
+        if (first_old[3] != first_new[3]):
+            buffer_period = first_new.copy()
+            buffer_period[3] = first_old[3]
+            buffer_period[4] = first_new[3]-timedelta(days=1)
+            buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
+            to_insert.append(buffer_period[1:-1])
+
+    #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
     for i in range(number_of_lines_to_update):
         j = 0
 
