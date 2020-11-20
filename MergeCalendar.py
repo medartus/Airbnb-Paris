@@ -33,8 +33,8 @@ def Merging(date,new_calendar):
     to_insert = []
     to_delete = []
     
-    fileNameDate =  date - relativedelta.relativedelta(months=1)
-    reviews = pd.read_csv('./datasets/reviews/reviews-'+str(fileNameDate)[:7]+'.csv',sep=",")
+    fileNameDate =  str(date - relativedelta.relativedelta(months=1))[:7]
+    reviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
     maxDate = reviews['date'].max()
     lastMonthDate = dt.datetime.strptime(maxDate, date_format) + relativedelta.relativedelta(days=1)
     
