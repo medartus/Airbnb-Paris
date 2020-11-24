@@ -71,10 +71,8 @@ def MergeTwoCalendars(old_calendar,new_calendar):
 
     #Sort par annonce et date 
     concat_cal = concat_cal.sort_values(["listing_id","start_date"])
-
     #On enlève les dates "old" et "new" qui n'ont pas changé car on ne les utilise pas pour actualiser notre calendrier
     concat_cal = concat_cal.drop_duplicates(subset=["listing_id","start_date","end_date"], keep=False)
-
     #Application de la fonction de détection des changements de date pour chaque listing_id. 
     #On retourne une liste que l'on va traiter par la suite
     concat_cal.cal_key = concat_cal.cal_key.fillna(0)
@@ -108,22 +106,17 @@ def UpdateByListingGroup(group):
     no_new_lines = False
     #converting to list
     group = group.values.tolist()
-   
-    
-    #Boolean variable to check wether the old dates are intersecting with new dates or not. If not, they aren't deleted in the database
-    has_intersect = True
 
     
     #If this is a new announce, we can't compare old with new, we just append all in the result ! 
     #################################################
     if(number_of_lines_to_update == 0 or number_of_new_lines == 0):
-        print(group)
         no_new_lines = True
         for u in range(len(group)):
             temp = group[u][1:-1]
             to_insert.append(temp)
             if(no_new_lines):
-                to_delete.append(temp)
+                to_delete.append(group[u][0])
         return None    
     #################################################  
     
@@ -152,48 +145,28 @@ def UpdateByListingGroup(group):
             buffer_period[4] = first_new[3]-timedelta(days=1)
             buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
             to_insert.append(buffer_period[1:-1])
-
     #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
     for i in range(number_of_lines_to_update):
         j = 0
-
         while(group[j][9] == "new"):
             j+=1
         
         old_to_update = group.pop(j)
         #converting date strings to date objects
-        if (type(old_to_update[3]) == str):
-            old_date_start = dt.datetime.strptime(old_to_update[3],date_format).date()
-        else:
-            old_date_start = old_to_update[3]
-
-        if (type(old_to_update[4]) == str):
-            old_date_end = dt.datetime.strptime(old_to_update[4],date_format).date()
-        else:
-            old_date_end = old_to_update[4]
+        old_date_start = old_to_update[3]
+        old_date_end = old_to_update[4]
 
 
         new_periods = []
         if(len(group) == 0):
             break
-        has_intersect = False
-
         #for every new period
         for k in range(len(group)):
             #converting date strings to date objects
-            if (type(group[k][3]) == str):
-                new_date_start = dt.datetime.strptime(group[k][3],date_format).date()
-            else:
-                new_date_start = group[k][3]
-
-            if (type(group[k][4]) == str):
-                new_date_end = dt.datetime.strptime(group[k][4],date_format).date()
-            else:
-                new_date_end = group[k][4]
+            new_date_start = group[k][3]
+            new_date_end = group[k][4]
             
 
-            """new_date_start = dt.datetime.strptime(group[k][2],date_format)
-            new_date_end = dt.datetime.strptime(group[k][3],date_format)"""
             number_days_new_period = nb_days(new_date_start,new_date_end)
             number_days_old_period = nb_days(old_date_start, old_date_end)
             
@@ -208,7 +181,6 @@ def UpdateByListingGroup(group):
             #period dans les bornes
             if(group[k][2] == "f"):
                 if (new_date_start <= old_date_end):
-                    has_intersect = True
                     if (number_days_new_period - number_days_old_period > MAX_NUMBER_OF_DAYS_WHEN_EXTENDING):
 
                         # creating 2 periods from one
@@ -237,16 +209,13 @@ def UpdateByListingGroup(group):
                             second_period[3] = old_date_end+timedelta(days=1)
                             second_period[5] = nb_days(second_period[4],second_period[3])
                             new_periods.append(first_period[1:-1])
-
                             group.append(second_period)
                     else:
                         new_periods.append(group[k][1:-1])
             else:
                 new_periods.append(group[k][1:-1])
                 
-        #Append all old dates to delete that had an intersection with new dates
-        #if has_intersect:
-        to_delete.append([old_to_update])
+        to_delete.append(old_to_update[0])
             
         #append all new periods we created
         for period in new_periods:
@@ -260,7 +229,6 @@ def UpdateByListingGroup(group):
         if(remaining_date[1:-1] not in to_insert):
             to_insert.append(remaining_date[1:-1])
     return None
-
 
 
 
