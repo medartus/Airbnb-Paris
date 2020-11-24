@@ -26,13 +26,23 @@ def FormatInsert(columns):
 Format the columns for the update exception of the PostgreSQL upsert
 See PostgreSQL upsert syntax to understand
 '''
-def FormatUpdate(columns):
+def FormatExcludeUpdate(columns):
     listColumns = ""
     for index in range(len(columns)-1):
         listColumns += columns[index]+" = EXCLUDED."+ columns[index]+", "
     listColumns += columns[-1]+" = EXCLUDED."+ columns[-1]
     return listColumns
 
+'''
+Format the columns for the update 
+See PostgreSQL upsert syntax to understand
+'''
+def FormatUpdate(columns):
+    listColumns = ""
+    for index in range(len(columns)-1):
+        listColumns += columns[index]+" = %s, "
+    listColumns += columns[-1]+" = %s"
+    return listColumns
 
 '''
 PostgreSQL upsert : Insert a new row into the table, PostgreSQL will update the row if it already exists
@@ -53,7 +63,7 @@ def ExecQueryBatch(query, values):
 
 # PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
 def InsertOrUpdate(tableName, columns, values):
-    query = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatUpdate(columns)+";"
+    query = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatExcludeUpdate(columns)+";"
     ExecQueryBatch(query, values)
 
 def CalendarDelete(data):
@@ -64,6 +74,10 @@ def Insert(data,tableName,columns):
     query_to_insert = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s);"
     ExecQueryBatch(query_to_insert, data)
 
+def UpdateValidation(df):
+    df = df[['validation','proba','ext_validation','cal_key']]
+    query_to_update = "UPDATE calendars SET validation=%s, proba=%s, ext_validation=%s WHERE cal_key = %s"
+    ExecQueryBatch(query_to_update, df.values.tolist())
 
 '''
 Get the result of an execute query to the database
@@ -86,3 +100,6 @@ def Execute(query):
     # Close connection
     conn.close()
     return res
+
+if __name__ == "__main__":
+    print(FormatUpdate(["validation","ext_validation"]))

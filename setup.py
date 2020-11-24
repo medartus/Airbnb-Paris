@@ -14,7 +14,7 @@ import datetime
 import pandas as pd
 from dateutil import relativedelta
 import shutil
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 datasets = ['listings','reviews','calendar']
 
@@ -89,18 +89,19 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',date,optimizedCalendar)
+    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
+    probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
+    listProbaCalendar = probaCalendar.values.tolist()
+    DatabaseConnector.Insert(listProbaCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
     start_time = time.time()
     print('------- Start of reviews process -------')
-    validatedCalendar = Validation.ProcessAndSave(fileNameDate,'validated_calendar',labelizedCalendar)
-    probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',validatedCalendar)
-    extValidatedCalendar =  ConvertReviews.ProcessAndSave(fileNameDate,'ext_validated_calendar',probaCalendar)
-    listExtValidatedCalendar = extValidatedCalendar.values.tolist()
-    DatabaseConnector.Insert(listExtValidatedCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
+    validatedCalendar = Validation.ProcessAndSave(fileNameDate,'validated_calendar',date)
+    extValidatedCalendar =  ConvertReviews.ProcessAndSave(fileNameDate,'ext_validated_calendar',validatedCalendar)
+    DatabaseConnector.UpdateValidation(extValidatedCalendar)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
@@ -141,4 +142,12 @@ def ProcessDateRange(startDate,endDate):
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
-ProcessDateRange('2017-01-01','2017-02-01')
+if __name__ == "__main__":
+    ProcessDateRange('2017-01-01','2017-02-01')
+    
+    # period = "2017-02" 
+    # date = datetime.strptime(period, "%Y-%m")
+
+    # validatedCalendar = Validation.ProcessAndSave(period,'validated_calendar',date)
+    # extValidatedCalendar =  ConvertReviews.ProcessAndSave(period,'ext_validated_calendar',validatedCalendar)
+    # DatabaseConnector.UpdateValidation(extValidatedCalendar)

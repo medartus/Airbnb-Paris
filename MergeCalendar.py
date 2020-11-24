@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 import DatabaseConnector
 
 # List of columns kept in the database for Calendar dataset
-date_format  = "%Y-%m-%d"
 DATABASE_CALENDARS_COLUMNS = [
     "cal_key",
     "listing_id",
@@ -26,21 +25,18 @@ to_delete = []
 # Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 # Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(date,new_calendar):
+def Merging(new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
-    
-    fileNameDate =  str(date - relativedelta.relativedelta(months=1))[:7]
-    reviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
-    maxDate = reviews['date'].max()
-    lastMonthDate = dt.datetime.strptime(maxDate, date_format) + relativedelta.relativedelta(days=1)
+
+    minDate = new_calendar['start_date'].min()
     
     #get data from db and format
     requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
-    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(lastMonthDate) + "'")
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(minDate) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
@@ -239,7 +235,7 @@ def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = Merging(date,newCalendar)
+        df = Merging(newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df

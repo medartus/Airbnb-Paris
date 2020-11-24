@@ -53,7 +53,7 @@ def CalculateProba(row,listing,calendar):
     if row["label"] != "A" or row["label"] != "MIN" or row["num_day"] < "MAX":
         tempProba = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((row["num_day"]+202)/142,2))
         tempProba = AdjustProbaInstantBooking(row, listing, tempProba)
-        tempProba = AdjustProbaByValidation(row, tempProba) 
+        # tempProba = AdjustProbaByValidation(row, tempProba) 
     if CheckIfLastPeriodIsClosed(calendar, row.name) == True:
         tempProba = AdjustProbaLastPeriod(tempProba)
     return round(tempProba,2)
@@ -67,6 +67,10 @@ def AddingProba(calendar,filename):
     listing = listing.set_index('id')
     calendar = calendar.sort_values(["listing_id","start_date"])         #To be sure that the calendar is sorted
     calendar['proba'] = calendar.apply(lambda x : CalculateProba(x,listing,calendar), axis=1)
+    
+    calendar['validation'] = False
+    calendar['ext_validation'] = 0
+
     return calendar
 
 
