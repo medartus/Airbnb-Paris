@@ -137,9 +137,8 @@ def ProcessDateRange(startDate,endDate):
     endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
     while startDate < endDate:
         start_time = time.time()
-        if startDate.strftime("%Y-%m") != '2018-02':
-            ProcessDate(startDate)
+        ProcessDate(startDate)
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
-ProcessDateRange('2017-02-01','2017-03-01')
+ProcessDateRange('2017-01-01','2017-02-01')
