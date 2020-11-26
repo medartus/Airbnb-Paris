@@ -2,7 +2,11 @@
 *.xlsx
 *.gz
 *.zip
-!mysql/airbnb/
 .ipynb_checkpoints/
 *.env
 __pycache__/*
+*/__pycache__/*
+assets/*
+*.css
+*.pyc
+.pytest_cache/*

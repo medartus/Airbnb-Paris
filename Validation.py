@@ -1,19 +1,24 @@
 import pandas as pd
+import datetime as dt
+from dateutil import relativedelta
 import time
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-'''
-This function returns the oldest 'end_date' date of the calendar dataset
-'''
-def get_last_day(calendar):
+import DatabaseConnector
 
-    calendar['end_date'] = pd.to_datetime(calendar.end_date)
-    calendar = calendar.sort_values(by="end_date")
-    last_day = calendar['end_date'].iloc[0]
-
-    return last_day
-
+DATABASE_CALENDARS_COLUMNS = [
+    "cal_key",
+    "listing_id",
+    "available",
+    "start_date",
+    "end_date",
+    "num_day",
+    "minimum_nights",
+    "maximum_nights",
+    "label",
+    "proba",
+]
 
 '''
 Thanks to the oldest day from the previous function,
@@ -56,15 +61,17 @@ to search possible validation from this review and update the result in calendar
 '''
 def validateInternalCalendar(calendar, reviews):
 
-    last_day = get_last_day(calendar)
+    calendar['start_date'] = pd.to_datetime(calendar.start_date)
+    calendar['end_date'] = pd.to_datetime(calendar.end_date)
+
+    last_day = calendar['end_date'].min()
     reviews = sort_reviews(reviews, last_day)
 
     calendar['period_id'] = calendar.index
     
-    newCalendar = calendar[(calendar['end_date'] <= reviews['date'].max())]
-    newCalendar = newCalendar[(newCalendar.available != 't') & (newCalendar.label != 'MIN') & (newCalendar.label != 'MAX')]
+    newCalendar = calendar[(calendar.available != 't') & (calendar.label != 'MIN') & (calendar.label != 'MAX')]
     
-    newCalendar["validation"] = False
+    newCalendar['validation'] = False
     newCalendar = newCalendar.set_index(['listing_id','end_date'])
 
     for review in reviews.sort_values('date', ascending=False).itertuples():
@@ -76,6 +83,8 @@ def validateInternalCalendar(calendar, reviews):
 
     validatedCalendar = pd.concat([calendar, newCalendar[['validation']]], axis=1)
     validatedCalendar['validation'] = validatedCalendar['validation'].fillna(False)
+
+    validatedCalendar['proba'] = validatedCalendar.apply(lambda per: 1 if per.validation else per.proba ,axis=1)
 
     validatedCalendar = validatedCalendar.reset_index()
     del validatedCalendar['period_id']
@@ -111,8 +120,11 @@ this function will iterate over each interesting review (after sorting)
 to search possible validation from this review and update the result in calendar.
 '''
 def validateExternalCalendar(calendar, reviews):
+    
+    calendar['start_date'] = pd.to_datetime(calendar.start_date)
+    calendar['end_date'] = pd.to_datetime(calendar.end_date)
 
-    last_day = get_last_day(calendar)
+    last_day = calendar['end_date'].min()
     reviews = sort_reviews(reviews, last_day)
 
     calendar['period_id'] = calendar.index
@@ -143,40 +155,50 @@ def validateExternalCalendar(calendar, reviews):
 '''
 Given the calendar, and the review file name, it will sort reviews fields and run the validation
 '''
-def ValidateWithReviews(calendar,filename):
+def ValidateWithReviews(filename,date):
     # open files
     reviews = pd.read_csv("./datasets/reviews/reviews-"+filename+".csv")
 
     # optimize calendar data to process
     reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
+    maxDate = datetime.strptime(reviews['date'].max(), "%Y-%m-%d")
+
+    # extract calendars
+    fileNameDate =  str(date - relativedelta.relativedelta(months=1))[:7]
+    oldReviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
+    minDate = datetime.strptime(oldReviews['date'].max(), "%Y-%m-%d")
+    
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date > '" + str(minDate) + "' and end_date <= '" + str(maxDate) + "'")
+    calendar = pd.DataFrame(res, columns= DATABASE_CALENDARS_COLUMNS)
 
     # Execute validation
     return validateInternalCalendar(calendar,reviews)
     
-def ProcessAndSave(fileNameDate,SavedName,calendar):
+def ProcessAndSave(fileNameDate,SavedName,date):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = ValidateWithReviews(calendar,fileNameDate)
+        df = ValidateWithReviews(fileNameDate,date)
         print(f'--- Validation {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 if __name__ == "__main__":
 
-    period = "2017-02"
-    calendar = pd.read_csv("./datasets/saved/"+period+"/labelized_calendar-"+period+".csv")
+    period = "2017-02" 
+    date = datetime.strptime(period, "%Y-%m")
 
     start_time = time.time()
     print('------- Start of reviews process -------')
-    validated_calendar = ValidateWithReviews(calendar,period)
+    validated_calendar = ValidateWithReviews(period,date)
     print('------- End of reviews process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
     # Print and save result
-    print("Sizes:",len(calendar),"|",len(validated_calendar))
+    print("Sizes:",len(validated_calendar),"|",len(validated_calendar))
     valid = validated_calendar[validated_calendar.validation == True]
     print(valid)
