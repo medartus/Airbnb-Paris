@@ -1,5 +1,5 @@
 import pytest
-
+import numpy as np
 import MockCalendar
 
 import os,sys,inspect
@@ -16,6 +16,17 @@ def TestMerging(fct, verbose=False):
 	toInsert.sort(key = lambda x: (x[2],x[3]), reverse = False)
 	toDelete.sort()
 	mockedInsert.sort(key = lambda x:(x[2],x[3]),reverse = False)
+	if(len(toInsert)>0):
+		toInsert = np.delete(np.array(toInsert),7,1)
+	else : 
+		toInsert = np.array(toInsert)
+	toDelete = np.array(toDelete)
+	if(len(mockedInsert)>0):
+		mockedInsert = np.delete(np.array(mockedInsert),7,1)
+	else :
+		mockedInsert = np.array(mockedInsert)
+	mockedDelete = np.array(mockedDelete)
+
 
 	if verbose:
 		print("Merge :")
@@ -26,35 +37,35 @@ def TestMerging(fct, verbose=False):
 		print(len(toDelete),toDelete)
 		print("Mock : ")
 		print(len(mockedDelete),mockedDelete)
-	assert toInsert == mockedInsert, "Wrong insert"
-	assert toDelete == mockedDelete, "Wrong delete"
+	assert (toInsert == mockedInsert).all(), "Wrong insert"
+	assert (toDelete == mockedDelete).all(), "Wrong delete"
 
 def testMock1():
-	TestMerging(MockCalendar.Mock1(),verbose = True)
+	TestMerging(MockCalendar.Mock1())
 
 def testMock2():
-	TestMerging(MockCalendar.Mock2(),verbose = True)
+	TestMerging(MockCalendar.Mock2())
 
 def testMock3():
-	TestMerging(MockCalendar.Mock3(),verbose = True)
+	TestMerging(MockCalendar.Mock3())
 
 def testMock4():
-	TestMerging(MockCalendar.Mock4(),verbose = True)
+	TestMerging(MockCalendar.Mock4())
 
 def testMock5():
-	TestMerging(MockCalendar.Mock5(),verbose = True)
+	TestMerging(MockCalendar.Mock5())
 
 def testMock6():
-	TestMerging(MockCalendar.Mock6(), verbose = True)
+	TestMerging(MockCalendar.Mock6())
 
 def testMock7():
-	TestMerging(MockCalendar.Mock7(), verbose = True)
+	TestMerging(MockCalendar.Mock7())
 
 def testMock8():
-	TestMerging(MockCalendar.Mock8(), verbose = True )
+	TestMerging(MockCalendar.Mock8())
 
 def testMock9():
-	TestMerging(MockCalendar.Mock9(), verbose = True)
+	TestMerging(MockCalendar.Mock9())
 
 def testMock10():
 	TestMerging(MockCalendar.Mock10())
@@ -62,11 +73,13 @@ def testMock10():
 def testMock11():
 	TestMerging(MockCalendar.Mock11())
 
+def testMock12():
+	TestMerging(MockCalendar.Mock12())
+
 def testMock13():
 	TestMerging(MockCalendar.Mock13())
 
 def testMock14():
 	TestMerging(MockCalendar.Mock14())
 
-testMock9()
 
