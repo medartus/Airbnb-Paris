@@ -1,5 +1,5 @@
 import pytest
-
+import numpy as np
 import MockCalendar
 
 import os,sys,inspect
@@ -9,21 +9,33 @@ sys.path.insert(0,parentdir)
 
 import MergeCalendar
 
-
 def TestMerging(fct, verbose=False):
-	actual_calendar, new_calendar, mockedInsert, mockedDelete = fct
+	new_calendar, actual_calendar, mockedInsert, mockedDelete = fct
 	toInsert, toDelete = MergeCalendar.MergeTwoCalendars(actual_calendar,new_calendar)
+	toInsert.sort(key = lambda x: (x[2],x[3]), reverse = False)
+	toDelete.sort()
+	mockedInsert.sort(key = lambda x:(x[2],x[3]),reverse = False)
+	if(len(toInsert)>0):
+		toInsert = np.delete(np.array(toInsert),7,1)
+	else : 
+		toInsert = np.array(toInsert)
+	if(len(mockedInsert)>0):
+		mockedInsert = np.delete(np.array(mockedInsert),7,1)
+	else :
+		mockedInsert = np.array(mockedInsert)
+
 
 	if verbose:
+		print("Merge :")
 		print(len(toInsert),toInsert)
-		print()
+		print("Mock : ")
 		print(len(mockedInsert),mockedInsert)
-		print()
+		print("Merge :")
 		print(len(toDelete),toDelete)
-		print()
+		print("Mock : ")
 		print(len(mockedDelete),mockedDelete)
-
-	assert toInsert == mockedInsert, "Wrong insert"
+	
+	assert (toInsert == mockedInsert).all(), "Wrong insert"
 	assert toDelete == mockedDelete, "Wrong delete"
 
 def testMock1():
@@ -59,8 +71,15 @@ def testMock10():
 def testMock11():
 	TestMerging(MockCalendar.Mock11())
 
+def testMock12():
+	TestMerging(MockCalendar.Mock12())
+
 def testMock13():
 	TestMerging(MockCalendar.Mock13())
 
 def testMock14():
 	TestMerging(MockCalendar.Mock14())
+
+
+if __name__ == "__main__":
+	TestMerging(MockCalendar.Mock10())

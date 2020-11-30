@@ -2,11 +2,11 @@
 *.xlsx
 *.gz
 *.zip
+*.html
 .ipynb_checkpoints/
 *.env
-__pycache__/*
-*/__pycache__/*
-assets/*
+**/__pycache__/
+assets/
 *.css
 *.pyc
-.pytest_cache/*
+.pytest_cache/
