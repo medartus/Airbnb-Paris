@@ -30,11 +30,11 @@ to_delete = []
 # Créer deux listes : Une pour insérer , une pour delete
 
 def Merging(new_calendar):
-    #on réinitialise les deux variables globales to_insert et to_delete
-    global to_insert
-    global to_delete
-    to_insert = []
-    to_delete = []
+    # #on réinitialise les deux variables globales to_insert et to_delete
+    # global to_insert
+    # global to_delete
+    # to_insert = []
+    # to_delete = []
 
     minDate = new_calendar['start_date'].min()
     
@@ -56,6 +56,11 @@ def Merging(new_calendar):
 
 
 def MergeTwoCalendars(old_calendar,new_calendar):
+    #on réinitialise les deux variables globales to_insert et to_delete
+    global to_insert
+    global to_delete
+    to_insert = []
+    to_delete = []
 
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"

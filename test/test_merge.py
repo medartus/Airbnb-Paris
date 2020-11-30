@@ -9,7 +9,6 @@ sys.path.insert(0,parentdir)
 
 import MergeCalendar
 
-
 def TestMerging(fct, verbose=False):
 	new_calendar, actual_calendar, mockedInsert, mockedDelete = fct
 	toInsert, toDelete = MergeCalendar.MergeTwoCalendars(actual_calendar,new_calendar)
@@ -20,12 +19,10 @@ def TestMerging(fct, verbose=False):
 		toInsert = np.delete(np.array(toInsert),7,1)
 	else : 
 		toInsert = np.array(toInsert)
-	toDelete = np.array(toDelete)
 	if(len(mockedInsert)>0):
 		mockedInsert = np.delete(np.array(mockedInsert),7,1)
 	else :
 		mockedInsert = np.array(mockedInsert)
-	mockedDelete = np.array(mockedDelete)
 
 
 	if verbose:
@@ -37,8 +34,9 @@ def TestMerging(fct, verbose=False):
 		print(len(toDelete),toDelete)
 		print("Mock : ")
 		print(len(mockedDelete),mockedDelete)
+	
 	assert (toInsert == mockedInsert).all(), "Wrong insert"
-	assert (toDelete == mockedDelete).all(), "Wrong delete"
+	assert toDelete == mockedDelete, "Wrong delete"
 
 def testMock1():
 	TestMerging(MockCalendar.Mock1())
@@ -83,3 +81,5 @@ def testMock14():
 	TestMerging(MockCalendar.Mock14())
 
 
+if __name__ == "__main__":
+	TestMerging(MockCalendar.Mock10())
