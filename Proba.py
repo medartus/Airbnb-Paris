@@ -50,7 +50,7 @@ Function we used : https://www.geogebra.org/calculator/rch5ctnn
 """
 def CalculateProba(row,listing,calendar):
     tempProba = 0
-    if row["label"] != "A" or row["label"] != "MIN" or row["num_day"] < "MAX":
+    if row["label"] != "A" and row["label"] != "MIN" and row["label"] != "MAX":
         tempProba = 935/(142*np.sqrt(2*np.pi))*np.exp(-0.5*np.power((row["num_day"]+202)/142,2))
         tempProba = AdjustProbaInstantBooking(row, listing, tempProba)
         # tempProba = AdjustProbaByValidation(row, tempProba) 
