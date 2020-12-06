@@ -156,7 +156,6 @@ def UpdateByListingGroup(group):
     for i in range(counter):
         group.pop(-1)
 
-
     first_old = group[idx_old]
     first_new = group[idx_new]
     if(first_old[3].month <first_old[4].month and first_new[4]>=first_old[4]):
@@ -265,7 +264,7 @@ def UpdateByListingGroup(group):
                 if (new_date_start <= old_date_end):
                     #Case this is the first old and new : Either extension on the left, or both extension left and right
                     if(old_date_start<new_date_start and i == 0 and k == 0):
-                        if(new_date_end>old_date_end):
+                        if(new_date_end>=old_date_end and old_to_update[2] != group[k][2]):
                             deleted = True
                             buffer_period = old_to_update.copy()
                             buffer_period[4] = new_date_start - timedelta(days=1)
@@ -275,11 +274,11 @@ def UpdateByListingGroup(group):
                             first_period[5] = nb_days(first_period[4],first_period[3])
                             new_periods.append(buffer_period[1:-1])
                             new_periods.append(first_period[1:-1])
-
-                            second_period = group[k].copy()
-                            second_period[3] = old_date_end+timedelta(days=1)
-                            second_period[5] = nb_days(second_period[4],second_period[3])
-                            group.insert(k+1,second_period)  
+                            if(new_date_end != old_date_end):
+                                second_period = group[k].copy()
+                                second_period[3] = old_date_end+timedelta(days=1)
+                                second_period[5] = nb_days(second_period[4],second_period[3])
+                                group.insert(k+1,second_period)  
                     elif (nb_days(old_date_end,new_date_end)>MAX_NUMBER_OF_DAYS_WHEN_EXTENDING and new_date_end>=old_date_end):
                         
                         # creating 2 periods from one
