@@ -27,8 +27,8 @@ DATABASE_CALENDARS_COLUMNS = [
     "minimum_nights",
     "maximum_nights",
     "label",
-    "validation",
 	"proba",
+    "validation",
     "ext_validation"
 ]
 
@@ -92,8 +92,7 @@ def ProcessDatasets(date):
     mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
-    listProbaCalendar = probaCalendar.values.tolist()
-    DatabaseConnector.Insert(listProbaCalendar,'calendars',DATABASE_CALENDARS_COLUMNS)
+    DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
@@ -111,7 +110,7 @@ def ProcessDatasets(date):
 '''
 Process a specific date and download the datasets if they don't exist
 '''
-def ProcessDate(date):
+def CreateFolder(date):
     # Verify if datasets exists
     isListings = DownloadDatasets.VerifyDatasetExists('listings',date)
     isCalendar = DownloadDatasets.VerifyDatasetExists('calendar',date)
@@ -131,20 +130,20 @@ Process the daily importation
 '''
 def ProcessDaily():
     date = datetime.date.today()
-    ProcessDate(date)
+    ProcessDatasets(date)
 
 def ProcessDateRange(startDate,endDate):
-    startDate = datetime.datetime.strptime(startDate,"%Y-%m-%d").date()
-    endDate = datetime.datetime.strptime(endDate,"%Y-%m-%d").date()
+    startDate = datetime.strptime(startDate,"%Y-%m-%d").date()
+    endDate = datetime.strptime(endDate,"%Y-%m-%d").date()
     while startDate < endDate:
         start_time = time.time()
-        ProcessDate(startDate)
+        ProcessDatasets(startDate)
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
 
 if __name__ == "__main__":
-    ProcessDateRange('2017-01-01','2017-02-01')
-    
+    ProcessDateRange('2018-01-01','2019-01-01')
+
     # period = "2017-02" 
     # date = datetime.strptime(period, "%Y-%m")
 

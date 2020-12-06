@@ -47,8 +47,7 @@ def FormatUpdate(columns):
 '''
 PostgreSQL upsert : Insert a new row into the table, PostgreSQL will update the row if it already exists
 '''
-def ExecQueryBatch(query, values):
-    params_list = [tuple(value) for value in values]
+def ExecQueryBatch(query, params_list):
 
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
     cur = conn.cursor()
@@ -64,6 +63,7 @@ def ExecQueryBatch(query, values):
 # PostgreSQL upsert : insert a new row into the table, PostgreSQL will update the row if it already exists
 def InsertOrUpdate(tableName, columns, values):
     query = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatExcludeUpdate(columns)+";"
+    params_list = [tuple(value) for value in values]
     ExecQueryBatch(query, values)
 
 def CalendarDelete(data):
@@ -72,12 +72,14 @@ def CalendarDelete(data):
 
 def Insert(data,tableName,columns):
     query_to_insert = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s);"
-    ExecQueryBatch(query_to_insert, data)
+    params_list = [tuple(value) for value in data]
+    ExecQueryBatch(query_to_insert, params_list)
 
 def UpdateValidation(df):
     df = df[['validation','proba','ext_validation','cal_key']]
     query_to_update = "UPDATE calendars SET validation=%s, proba=%s, ext_validation=%s WHERE cal_key = %s"
-    ExecQueryBatch(query_to_update, df.values.tolist())
+    params_list = [tuple(value) for value in df.values.tolist()]
+    ExecQueryBatch(query_to_update, params_list)
 
 '''
 Get the result of an execute query to the database

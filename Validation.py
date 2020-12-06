@@ -49,7 +49,7 @@ def validate_internal_period(review, calendar):
     # if there is validations, mark the shortest period as validated
     if not validations.empty:
         validated_index = validations.sort_values(by="num_day").index.values[0]
-        calendar.at[(review.listing_id,validated_index), 'validation'] = True
+        calendar.loc[(review.listing_id,validated_index), 'validation'] = True
     
     return calendar
 
@@ -73,6 +73,7 @@ def validateInternalCalendar(calendar, reviews):
     
     newCalendar['validation'] = False
     newCalendar = newCalendar.set_index(['listing_id','end_date'])
+    newCalendar = newCalendar.sort_index()
 
     for review in reviews.sort_values('date', ascending=False).itertuples():
         newCalendar = validate_internal_period(review,newCalendar)
@@ -110,7 +111,7 @@ def validate_external_period(review, calendar):
     # if there is validations, mark the shortest period as validated
     if not validations.empty:
         validated_index = validations.sort_values(by="num_day").index.values[0]
-        calendar.at[(review.listing_id,validated_index), 'ext_validation'] = review.corresp
+        calendar.loc[(review.listing_id,validated_index), 'ext_validation'] = review.corresp
 
     return calendar
 
@@ -135,6 +136,7 @@ def validateExternalCalendar(calendar, reviews):
     
     newCalendar["ext_validation"] = 0
     newCalendar = newCalendar.set_index(['listing_id','end_date'])
+    newCalendar = newCalendar.sort_index()
     
     for review in reviews.sort_values('date', ascending=False).itertuples():
         newCalendar = validate_external_period(review,newCalendar)

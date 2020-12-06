@@ -1,5 +1,5 @@
 numpy==1.17.4
-pandas==0.25.3
+pandas==1.1.4
 mysql-connector-python==8.0.21
 python-dotenv==0.14.0
 psycopg2==2.8.6

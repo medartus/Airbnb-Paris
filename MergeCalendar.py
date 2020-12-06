@@ -30,11 +30,11 @@ to_delete = []
 # Créer deux listes : Une pour insérer , une pour delete
 
 def Merging(new_calendar):
-    # #on réinitialise les deux variables globales to_insert et to_delete
-    # global to_insert
-    # global to_delete
-    # to_insert = []
-    # to_delete = []
+    #on réinitialise les deux variables globales to_insert et to_delete
+    global to_insert
+    global to_delete
+    to_insert = []
+    to_delete = []
 
     minDate = new_calendar['start_date'].min()
     
@@ -70,7 +70,7 @@ def MergeTwoCalendars(old_calendar,new_calendar):
     old_calendar['end_date'] = pd.to_datetime(old_calendar.end_date)
     new_calendar['start_date'] = pd.to_datetime(new_calendar.start_date)
     new_calendar['end_date'] = pd.to_datetime(new_calendar.end_date)
-
+    
     #joining both calendars
     concat_cal = pd.concat([old_calendar,new_calendar],sort=False)
     concat_cal = concat_cal[DATABASE_CALENDARS_COLUMNS + ["state"]]
@@ -403,7 +403,7 @@ def UpdateByListingGroup(group):
 
 
 
-def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
+def ProcessAndSave(fileNameDate,SavedName,newCalendar):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
