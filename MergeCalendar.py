@@ -156,24 +156,28 @@ def UpdateByListingGroup(group):
     for i in range(counter):
         group.pop(-1)
 
-
     first_old = group[idx_old]
     first_new = group[idx_new]
-    if(first_old[3].month <first_old[4].month and first_new[4]>=first_old[4]):
-        if(first_new[3]<first_old[4]):
-
-            if(first_new[4] != first_old[4]):
+    if(abs(first_old[3].month - first_new[3].month) == 1 and first_new[4]>=first_old[4]):
+        if(first_new[3]<=first_old[4]):
+            if(first_new[4] != first_old[4]):                
                 if(first_old[3] != first_new[3]):
-                    buffer_period = first_new.copy()
-                    buffer_period[3] = first_old[3]
-                    buffer_period[4] = first_old[4]
-                    buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
-                    second_period = first_new.copy()
-                    second_period[3] = first_old[3] + timedelta(days=1)
-                    second_period[5] = nb_days(second_period[3],second_period[4])
-                    group.append(second_period)
-                    to_insert.append(buffer_period[1:-1])
-                    to_delete.append(first_old[0])
+                    if(nb_days(first_old[4],first_new[4])>20):
+                        first_new[3] = first_old[3]
+                        first_new[5] = nb_days(first_new[3],first_new[4])
+                        to_insert.append(first_new[1:-1])
+                        to_delete.append(first_old[0])
+                    else:      
+                        buffer_period = first_new.copy()
+                        buffer_period[3] = first_old[3]
+                        buffer_period[4] = first_old[4]
+                        buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
+                        second_period = first_new.copy()
+                        second_period[3] = first_old[3] + timedelta(days=1)
+                        second_period[5] = nb_days(second_period[3],second_period[4])
+                        group.append(second_period)
+                        to_insert.append(buffer_period[1:-1])
+                        to_delete.append(first_old[0])
                 else:
                     to_insert.append(first_new[1:-1])
                     to_delete.append(first_old[0])
@@ -206,8 +210,6 @@ def UpdateByListingGroup(group):
             for i in range(len(group)):
                 to_insert.append(group[i][1:-1])
 
-    if(number_of_new_lines == 0):
-        return None
     #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
     for i in range(number_of_lines_to_update):
         deleted = False
@@ -241,6 +243,7 @@ def UpdateByListingGroup(group):
             number_days_old_period = nb_days(old_date_start, old_date_end)
 
             if(old_to_update[9]==group[k][9]):
+
                 break          
             #si period match pas
             if (new_date_start > old_date_end):
@@ -253,7 +256,7 @@ def UpdateByListingGroup(group):
                 #Dans le cas contraire, il faudrait ecrire pass. (problème d'input)
                 break
             if(new_date_end<old_date_start and old_to_update[9]==group[k][9]):
-
+                
                 if(not extended):
                     deleted = True   
                 break
@@ -265,7 +268,7 @@ def UpdateByListingGroup(group):
                 if (new_date_start <= old_date_end):
                     #Case this is the first old and new : Either extension on the left, or both extension left and right
                     if(old_date_start<new_date_start and i == 0 and k == 0):
-                        if(new_date_end>old_date_end):
+                        if(new_date_end>=old_date_end and old_to_update[2] != group[k][2]):
                             deleted = True
                             buffer_period = old_to_update.copy()
                             buffer_period[4] = new_date_start - timedelta(days=1)
@@ -275,19 +278,20 @@ def UpdateByListingGroup(group):
                             first_period[5] = nb_days(first_period[4],first_period[3])
                             new_periods.append(buffer_period[1:-1])
                             new_periods.append(first_period[1:-1])
-
-                            second_period = group[k].copy()
-                            second_period[3] = old_date_end+timedelta(days=1)
-                            second_period[5] = nb_days(second_period[4],second_period[3])
-                            group.insert(k+1,second_period)  
+                            if(new_date_end != old_date_end):
+                                second_period = group[k].copy()
+                                second_period[3] = old_date_end+timedelta(days=1)
+                                second_period[5] = nb_days(second_period[4],second_period[3])
+                                group.insert(k+1,second_period)  
                     elif (nb_days(old_date_end,new_date_end)>MAX_NUMBER_OF_DAYS_WHEN_EXTENDING and new_date_end>=old_date_end):
-                        
+
                         # creating 2 periods from one
                         # first period from old_start to old_end
                         # second period from old_end to new_end
                         #case right extend
 
                         if(new_date_start == old_date_start):
+
 
                             if(i == number_of_lines_to_update - 1 and len(group) == 1):
                                 deleted = True 
@@ -320,34 +324,32 @@ def UpdateByListingGroup(group):
                                     
 
                         #Case where there's an extension with no similar bounds for both start and end date and this is the last date
+                        
                         #this means this is the regular extension for each end of calendar
                         elif(k == len(group)-1):
                             new_periods.append(group[k][1:-1])
-                            deleted = True                  
+                            deleted = True  
+
                         else:
-
-
                             #Case this is a left extension from the next old date : we just cut the date and let the second date being handled by the next old date    
-                            if(group[k+1][4] == group[k][4]):
-                                first_period = group[k].copy()
-                                first_period[4] = old_date_end
-                                first_period[5] = nb_days(first_period[3],first_period[4])                 
-                                second_period = group[k].copy()
-                                second_period[3] = old_date_end+timedelta(days=1)
-                                second_period[5] = nb_days(second_period[4],second_period[3])
-                                new_periods.append(first_period[1:-1])
-                                group.append(second_period)
-                                extended = True
-                            #case this is just a new date 
-                            else:
-                                extended = True
-                                new_periods.append(group[k][1:-1])
+
+                            first_period = group[k].copy()
+                            first_period[4] = old_date_end
+                            first_period[5] = nb_days(first_period[3],first_period[4])                 
+                            second_period = group[k].copy()
+                            second_period[3] = old_date_end+timedelta(days=1)
+                            second_period[5] = nb_days(second_period[4],second_period[3])
+                            new_periods.append(first_period[1:-1])
+                            group.insert(k+1,second_period)
+                            extended = True
                     #case this is an extension <=2  OR deletion or old closing and new closed with smaller dates    
                     else:
+
                         if(group[k][1:-2] == old_to_update[1:-2]):
                             extended = True
                             k+=1
                             break
+
                         else:
                             deleted = True 
                             new_periods.append(group[k][1:-1])
