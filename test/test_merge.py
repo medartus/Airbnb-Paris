@@ -122,5 +122,6 @@ def testMock25():
 def testMock26():
     TestMerging(MockCalendar.Mock26())
 
+
 if __name__ == "__main__":
     TestMerging(MockCalendar.Mock24(),True)
