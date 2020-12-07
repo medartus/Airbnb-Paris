@@ -297,6 +297,7 @@ def UpdateByListingGroup(group):
                                 deleted = True 
                                 pass                          
                             else:
+                                print("ok")
                                 #Cas d'un old fermé et une extension de fermeture =>  On doit supprimer la date suivante old 
                                 if(old_to_update[2] == "f"):
                                     #first_period = old_to_update.copy()

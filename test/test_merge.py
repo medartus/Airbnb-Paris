@@ -8,10 +8,11 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir) 
 
 import MergeCalendar
+import Merge_V3
 
 def TestMerging(fct, verbose=False):
     new_calendar, actual_calendar, mockedInsert, mockedDelete = fct
-    toInsert, toDelete = MergeCalendar.MergeTwoCalendars(actual_calendar,new_calendar)
+    toInsert, toDelete = Merge_V3.MergeTwoCalendars(actual_calendar,new_calendar)
     toInsert.sort(key = lambda x: (x[2],x[3]), reverse = False)
     toDelete.sort()
     mockedInsert.sort(key = lambda x:(x[2],x[3]),reverse = False)
@@ -136,4 +137,4 @@ def testMock31():
 
 
 if __name__ == "__main__":
-    TestMerging(MockCalendar.Mock22(),True)
+    TestMerging(MockCalendar.Mock7(),True)
