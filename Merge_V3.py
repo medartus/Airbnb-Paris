@@ -130,6 +130,7 @@ def UpdateByListingGroup(group):
         if (group[i][9] == "new" and group[i][3] > last_old_end_date):
             to_insert.append(group[i][1:-1])
             del group[i]
+            
 
     if len(group) == 2 and group[0][2] == group[1][2]:
         print("ok")
