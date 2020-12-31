@@ -7,9 +7,9 @@ import os
 from datetime import datetime, timedelta
 import DatabaseConnector
 
-
+# Remplacer nb de jours extension par le nb minimum si il existe 
 #col name = {key nom de colonne: value index de colonne}
-#Nico/Med plus besoin de gerer les dates en décalage, seul les edge cases sur les deux bornes où on a une fragmentation de la date est à gérer
+#Nico/Med plus besoin de gerer les dates en décalage du début, seul les edge cases sur les deux bornes où on a une fragmentation de la date est à gérer
 
 # List of columns kept in the database for Calendar dataset
 DATABASE_CALENDARS_COLUMNS = [

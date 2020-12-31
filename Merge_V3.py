@@ -53,6 +53,10 @@ def Merging(date,new_calendar):
 
 
 def MergeTwoCalendars(old_calendar,new_calendar):
+    global to_insert
+    global to_delete
+    to_insert = []
+    to_delete = []
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"
 
@@ -115,6 +119,28 @@ def UpdateByListingGroup(group):
         return None
     #################################################  
     
+    #we remove all new periods that do not intersect in any way with our olds, and append them directly
+    last_old_end_date = None
+    for i in reversed(range(len(group))):
+        if (group[i][9] == "old"):
+            last_old_end_date = group[i][4]
+            break
+
+    for i in reversed(range(len(group))):
+        if (group[i][9] == "new" and group[i][3] > last_old_end_date):
+            to_insert.append(group[i][1:-1])
+            del group[i]
+
+    if len(group) == 2 and group[0][2] == group[1][2]:
+        print("ok")
+        group[1][3] = group[0][3]
+        group[1][5] = nb_days(group[1][3],group[1][4])
+        to_delete.append(group[0][0])
+        to_insert.append(group[1][1:-1])
+        return None
+
+
+
     #get start date of the new calendar
     # additionally, we get the first old period and first new period to 
     beginning_date_of_new_calendar = None
@@ -131,11 +157,12 @@ def UpdateByListingGroup(group):
             break
 
     if(beginning_date_of_new_calendar != None):
-        
+
         #remove all periods that end before the new cal
         for i in reversed(range(len(group))):
             ##legacy code
             if (group[i][4] < beginning_date_of_new_calendar):
+                print(group[i])
                 print("YOU SHOULD NOT HIT HERE")
                 to_insert.append("this is bugged")
                 group.pop(i)
@@ -145,7 +172,6 @@ def UpdateByListingGroup(group):
             elif group[i][9] == "old":
                 first_old = group[i].copy()
                 first_old_index = i
-
         # if end dates are the same and open type is the same --> we want to push the old
         # else, we create a buffer period into general case
         if (first_old[4] == first_new[4] and first_old[2] == first_new[2]):
@@ -159,8 +185,9 @@ def UpdateByListingGroup(group):
             number_of_lines_to_update -= 1
             number_of_new_lines -= 1
 
-        else:
+        elif(first_old[3] < first_new[3]):
             buffer_period = first_new.copy()
+            buffer_period[2] = first_old[2]
             buffer_period[3] = first_old[3]
             buffer_period[4] = first_new[3]-timedelta(days=1)
             buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
@@ -174,7 +201,8 @@ def UpdateByListingGroup(group):
         return None    
     if(number_of_new_lines == 0):
         return None
-    #################################################   
+    #################################################
+
 
     #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
     for i in range(number_of_lines_to_update):
@@ -197,6 +225,7 @@ def UpdateByListingGroup(group):
 
         new_periods = []
         if(len(group) == 0):
+            to_delete.append(old_to_update[0])
             break
 
         #for every new period
@@ -208,7 +237,6 @@ def UpdateByListingGroup(group):
 
             number_days_new_period = nb_days(new_date_start,new_date_end)
             number_days_old_period = nb_days(old_date_start, old_date_end)
-            
             #si period match pas
             if (new_date_start > old_date_end):
                 #On prend le cas théorique où toutes les dates se suivent, il n'y a pas de trous.
@@ -220,7 +248,8 @@ def UpdateByListingGroup(group):
             #period dans les bornes
             if(group[k][2] == "f"):
                 if (new_date_start <= old_date_end):
-                    if (number_days_new_period - number_days_old_period > MAX_NUMBER_OF_DAYS_WHEN_EXTENDING):
+                    if (nb_days(old_date_end,new_date_end)>MAX_NUMBER_OF_DAYS_WHEN_EXTENDING and new_date_end>=old_date_end):
+
 
                         # creating 2 periods from one
                         # first period from old_start to old_end
@@ -228,14 +257,14 @@ def UpdateByListingGroup(group):
 
                         #case right extend
                         if(new_date_start == old_date_start):
-
                             first_period = old_to_update.copy()
+                            first_period[2] = group[k][2]
                             second_period = group[k].copy()
                             second_period[3] = old_date_end+timedelta(days=1)
 
                             second_period[5] = nb_days(second_period[4],second_period[3])  
                             new_periods.append(first_period[1:-1])
-                            new_periods.append(second_period[1:-1])
+                            group.insert(k+1,second_period)
 
                         #Case where there's an extension with no similar bounds for both start and end date
                         else:
@@ -248,8 +277,9 @@ def UpdateByListingGroup(group):
                             second_period[3] = old_date_end+timedelta(days=1)
                             second_period[5] = nb_days(second_period[4],second_period[3])
                             new_periods.append(first_period[1:-1])
-                            group.append(second_period)
+                            group.insert(k+1,second_period)
                     else:
+                        
                         new_periods.append(group[k][1:-1])
             else:
                 new_periods.append(group[k][1:-1])

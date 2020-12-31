@@ -69,9 +69,6 @@ def testMock7():
 def testMock8():
     TestMerging(MockCalendar.Mock8())
 
-def testMock9():
-    TestMerging(MockCalendar.Mock9())
-
 def testMock10():
     TestMerging(MockCalendar.Mock10())
 
@@ -131,9 +128,6 @@ def testMock28():
 
 def testMock29():
     TestMerging(MockCalendar.Mock29())
-
-def testMock31():
-    TestMerging(MockCalendar.Mock31())
 
 
 if __name__ == "__main__":
