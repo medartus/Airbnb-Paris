@@ -163,7 +163,6 @@ def UpdateByListingGroup(group):
         for i in reversed(range(len(group))):
             ##legacy code
             if (group[i][4] < beginning_date_of_new_calendar):
-                print(group[i])
                 print("YOU SHOULD NOT HIT HERE")
                 to_insert.append("this is bugged")
                 group.pop(i)
@@ -213,12 +212,6 @@ def UpdateByListingGroup(group):
         
         old_to_update = group.pop(j)
 
-        #if we only have 1 new left, we append it as is
-        if(i == number_of_lines_to_update-1 and len(group)== 1):
-            to_delete.append(old_to_update[0])
-            break
-
-
         #converting date strings to date objects
         old_date_start = old_to_update[3]
         old_date_end = old_to_update[4]
@@ -245,7 +238,11 @@ def UpdateByListingGroup(group):
                 break
             if(new_date_end<old_date_start):
                 break
-                
+            
+            #if we only have 1 new left and 1 old left, we append it as is
+            if(i == number_of_lines_to_update-1 and k == len(group)-1):
+                break
+
             #period dans les bornes
             if(group[k][2] == "f"):
                 if (new_date_start <= old_date_end):
