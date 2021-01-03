@@ -7,6 +7,7 @@ import LabelizePeriods
 import DownloadDatasets
 import Validation
 import MergeCalendar
+import Merge_V3
 import DatabaseConnector
 import ConvertReviews
 import Proba
@@ -89,7 +90,7 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
+    mergedCalendar = Merge_V3.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
     DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATABASE_CALENDARS_COLUMNS)
@@ -142,7 +143,7 @@ def ProcessDateRange(startDate,endDate):
         startDate = startDate + relativedelta.relativedelta(months=1)
 
 if __name__ == "__main__":
-    ProcessDateRange('2018-01-01','2019-01-01')
+    ProcessDateRange('2017-01-01','2017-03-01')
 
     # period = "2017-02" 
     # date = datetime.strptime(period, "%Y-%m")

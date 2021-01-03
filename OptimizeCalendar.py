@@ -7,8 +7,7 @@ import os
 Create the result for period grouping
 '''
 def groupDate(group):
-    return [group.iloc[0]['date'], group.iloc[-1]['date'], group.shape[0],  group.iloc[0]['minimum_nights'],  group.iloc[0]['maximum_nights']]
-
+    return pd.Series([group.iloc[0]['date'], group.iloc[-1]['date'], group.shape[0],  group.iloc[0]['minimum_nights'],  group.iloc[0]['maximum_nights']])
 '''
 Import the calendar dataset and group by open/closed period to remove useless data
 '''
@@ -17,7 +16,6 @@ def OptimizeCalendar(filename):
 
     calendar = calendar.sort_values(by=["listing_id", "date"])
     calendar = calendar.reset_index()
-    
     # drop useless tables
     calendar = calendar.drop(list(set(['price','index','adjusted_price']) & set(calendar.columns)),axis=1)
 
@@ -28,17 +26,9 @@ def OptimizeCalendar(filename):
 
     # Group periods
     adj_check = (calendar.available != calendar.available.shift()).cumsum() # Avoid to grop no consecutive rows
-    newData = pd.DataFrame(calendar.groupby(['listing_id','available',adj_check], as_index=False, sort=False).apply(groupDate))
+    newData = calendar.groupby(['listing_id','available',adj_check], as_index=False, sort=False).apply(groupDate)
+    newData = newData.rename({0:'start_date',1:'end_date',2:'num_day',3:'minimum_nights',4:'maximum_nights'},axis=1)
 
-    # Convert data into columns
-    newData[['start_date','end_date','num_day','minimum_nights','maximum_nights']] = pd.DataFrame(newData[0].to_list(), index=newData.index)
-    
-    # Remove index to have access to listing_id and available columns
-    newData.index = newData.index.set_names(['listing_id', 'available','foo'])
-    newData = newData.reset_index()
-    del newData['foo']
-    del newData[0]
-    
     return newData
 
 def ProcessAndSave(fileNameDate,SavedName):
@@ -53,7 +43,11 @@ def ProcessAndSave(fileNameDate,SavedName):
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
-# start_time = time.time()
-# newData = OptimizeCalendar("calendar-2017-01")
-# print("---  %s seconds ---" % (time.time() - start_time))
-# newData.to_csv("./datasets/altered/calendar_periods.csv",index=False)
+
+
+if __name__ == "__main__":
+    
+    start_time = time.time()
+    newData = OptimizeCalendar("calendar-2017-01")
+    print("---  %s seconds ---" % (time.time() - start_time))
+#newData.to_csv("./datasets/calendar_periods.csv",index=False)

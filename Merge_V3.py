@@ -5,6 +5,7 @@ from dateutil import relativedelta
 import time
 import os
 from datetime import datetime, timedelta
+import DatabaseConnector
 
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
@@ -25,19 +26,18 @@ to_delete = []
 # Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
 # Créer deux listes : Une pour insérer , une pour delete
 
-def Merging(date,new_calendar):
+def Merging(new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
     global to_insert
     global to_delete
     to_insert = []
     to_delete = []
-    
-    # minDate = new_calendar['start_date'].min()
-    # lastYearDate =  dt.datetime.strptime(minDate, date_format) - relativedelta.relativedelta(months=1)
+
+    minDate = new_calendar['start_date'].min()
     
     #get data from db and format
-    requestedColumns = FormatInsert(DATABASE_CALENDARS_COLUMNS)
-    res = Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(date) + "'")
+    requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
+    res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(minDate) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
     #if first calendar
@@ -46,7 +46,7 @@ def Merging(date,new_calendar):
     #typical use of the function
     else:
         to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
-        #CalendarDelete(to_delete)
+        DatabaseConnector.CalendarDelete(to_delete)
         to_insert = pd.DataFrame(to_insert,columns=DATABASE_CALENDARS_COLUMNS[1:])
 
     return to_insert
@@ -133,7 +133,6 @@ def UpdateByListingGroup(group):
             
 
     if len(group) == 2 and group[0][2] == group[1][2]:
-        print("ok")
         group[1][3] = group[0][3]
         group[1][5] = nb_days(group[1][3],group[1][4])
         to_delete.append(group[0][0])
@@ -161,10 +160,9 @@ def UpdateByListingGroup(group):
 
         #remove all periods that end before the new cal
         for i in reversed(range(len(group))):
-            ##legacy code
+            ##legacy code : This is a case where we have a starting date of new calendar > the date we input in our Merging parameter
+            # In this case, it means that we have a  ~ 1-2 days closing outisde our intersection, that has to be dropped
             if (group[i][4] < beginning_date_of_new_calendar):
-                print("YOU SHOULD NOT HIT HERE")
-                to_insert.append("this is bugged")
                 group.pop(i)
                 number_of_lines_to_update -= 1
             ##
@@ -298,15 +296,14 @@ def UpdateByListingGroup(group):
     return None
 
 
-
-def ProcessAndSave(fileNameDate,SavedName,date,newCalendar):
+def ProcessAndSave(fileNameDate,SavedName,newCalendar):
     exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = Merging(date,newCalendar)
+        df = Merging(newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
