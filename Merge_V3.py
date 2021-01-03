@@ -165,9 +165,12 @@ def UpdateByListingGroup(group):
             if (group[i][4] < beginning_date_of_new_calendar):
                 group.pop(i)
                 number_of_lines_to_update -= 1
+                first_new_index-=1
             ##
 
-            elif group[i][9] == "old":
+        #get index of first old date
+        for i in reversed(range(len(group))):
+            if group[i][9] == "old":
                 first_old = group[i].copy()
                 first_old_index = i
         # if end dates are the same and open type is the same --> we want to push the old
@@ -182,15 +185,15 @@ def UpdateByListingGroup(group):
             
             number_of_lines_to_update -= 1
             number_of_new_lines -= 1
-
         elif(first_old[3] < first_new[3]):
+
             buffer_period = first_new.copy()
             buffer_period[2] = first_old[2]
             buffer_period[3] = first_old[3]
             buffer_period[4] = first_new[3]-timedelta(days=1)
             buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
             to_insert.append(buffer_period[1:-1])
-
+    
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
@@ -209,7 +212,6 @@ def UpdateByListingGroup(group):
             j+=1
         
         old_to_update = group.pop(j)
-
         #converting date strings to date objects
         old_date_start = old_to_update[3]
         old_date_end = old_to_update[4]
