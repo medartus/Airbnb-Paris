@@ -141,4 +141,4 @@ def testMock33():
     TestMerging(MockCalendar.Mock33())
 
 if __name__ == "__main__":
-    TestMerging(MockCalendar.Mock33(),True)
+    TestMerging(MockCalendar.Mock30(),True)

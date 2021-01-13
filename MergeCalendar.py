@@ -21,10 +21,18 @@ DATABASE_CALENDARS_COLUMNS = [
     "label"
 ]
 
+#la définition de nos variables globales qui sont des listes dans lesquelles nous insérons toutes les modifications à faire sur la base de données
+#to_delete contient les lignes qu'on devra supprimer en bdd
+#to_insert contient les lignes à modifier en bdd
+#cf importlistings pour son utilisation
 to_insert = []
 to_delete = []
-# Pour PostGre, cherche deux fonction , une pour faire les insertions, une pour les delete cf importlistings
-# Créer deux listes : Une pour insérer , une pour delete
+
+listOfStr = DATABASE_CALENDARS_COLUMNS + ['state']
+key_index= { listOfStr[i] : i for i in range(0, len(listOfStr) ) }
+#{'cal_key': 0, 'listing_id': 1, 'available': 2, 'start_date': 3, 'end_date': 4, 'num_day': 5, 'minimum_nights': 6, 'maximum_nights': 7, 'label': 8, 'state': 9}
+
+
 
 def Merging(new_calendar):
     #on réinitialise les deux variables globales to_insert et to_delete
@@ -35,15 +43,15 @@ def Merging(new_calendar):
 
     minDate = new_calendar['start_date'].min()
     
-    #get data from db and format
+    #Extraction de la data issue de la DB Postgre
     requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
     res = DatabaseConnector.Execute(f"SELECT {requestedColumns} FROM calendars where end_date >= '" + str(minDate) + "'")
     old_calendar = pd.DataFrame(res, columns=DATABASE_CALENDARS_COLUMNS)
 
-    #if first calendar
+    #Si c'est le premier calendrier, pas de comparaison à faire
     if old_calendar.empty:
         to_insert = new_calendar
-    #typical use of the function
+    #Utilisation typique de la fonction de merging
     else:
         to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
         DatabaseConnector.CalendarDelete(to_delete)
@@ -56,22 +64,23 @@ def Merging(new_calendar):
 def MergeTwoCalendars(old_calendar,new_calendar):
     global to_insert
     global to_delete
+    global key_index
     to_insert = []
     to_delete = []
     old_calendar["state"] = "old"
     new_calendar["state"] = "new"
 
-    #Converting dates    
+    #Conversion des dates    
     old_calendar['start_date'] = pd.to_datetime(old_calendar.start_date)
     old_calendar['end_date'] = pd.to_datetime(old_calendar.end_date)
     new_calendar['start_date'] = pd.to_datetime(new_calendar.start_date)
     new_calendar['end_date'] = pd.to_datetime(new_calendar.end_date)
 
-    #joining both calendars
+    #On fusionne le calendrier old et New
     concat_cal = pd.concat([old_calendar,new_calendar],sort=False)
     concat_cal = concat_cal[DATABASE_CALENDARS_COLUMNS + ["state"]]
 
-    #Sort par annonce et date 
+    #Tri par annonce et date 
     concat_cal = concat_cal.sort_values(["listing_id","start_date"])
     #On enlève les dates "old" et "new" qui n'ont pas changé car on ne les utilise pas pour actualiser notre calendrier
     concat_cal = concat_cal.drop_duplicates(subset=["listing_id","start_date","end_date","available"], keep=False)
@@ -84,32 +93,30 @@ def MergeTwoCalendars(old_calendar,new_calendar):
     return to_insert,to_delete
 
 
-##returns absolute number of days between to dates (inclusive) 
-##e.g. monday to wednesday = 3
+##On retourne le nombre de jours qui sépare les deux dates (inclusive) 
+##e.g. Lundi à mercredi = 3
 
 def nb_days(date1, date2):    
         
     return abs((date1-date2).days) + 1
 
 
-##Main function, splits the new periods according to our model
+##fonction principale de séparation des dates fermées et ouvertes
 def UpdateByListingGroup(group):
-    #maximum number of days before we start considering the modification of period as a new period
+    #Nombre maximum de jours au dela duquel on considère que la modification d'une période équivaut à un ajout d'une nouvelle location
     MAX_NUMBER_OF_DAYS_WHEN_EXTENDING = 2   
-    #setting our global variables which are lists where we insert all modifications to be done on the database
-    #to_delete contains the lines of the db we want to delete
-    #to_insert contains the lines of the db we need to insert after deletion to replace them
     global to_insert
     global to_delete
+    global key_index
 
-    #getting the number of old values that we need to update
+    #Nombre de valeurs old, pour pouvoir connaître le nombre d'itérations à faire sur la liste
     number_of_lines_to_update = group[group.state == "old"].shape[0]
     number_of_new_lines = group[group.state == "new"].shape[0]
     no_new_lines = False
-    #converting to list
+    #Conversion en list
     group = group.values.tolist()
 
-    #If this is a new announce, we can't compare old with new, we just append all in the result ! 
+    #Si c'est une nouvelle annonce, on ne compare rien, on ajoute  simplement les lignes associées
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
@@ -119,31 +126,30 @@ def UpdateByListingGroup(group):
     if(number_of_new_lines == 0):
         return None
     #################################################  
-    
-    #we remove all new periods that do not intersect in any way with our olds, and append them directly
+    #Cas décalage à droite
+    #nous supprimons toutes les nouvelles périodes qui ne se recoupent en aucun cas avec nos anciennes dates, et nous les ajoutons directement
     last_old_end_date = None
     for i in reversed(range(len(group))):
-        if (group[i][9] == "old"):
-            last_old_end_date = group[i][4]
+        if (group[i][key_index['state']] == "old"):
+            last_old_end_date = group[i][key_index['end_date']]
             break
 
     for i in reversed(range(len(group))):
-        if (group[i][9] == "new" and group[i][3] > last_old_end_date):
+        if (group[i][key_index['state']] == "new" and group[i][key_index['start_date']] > last_old_end_date):
             to_insert.append(group[i][1:-1])
             del group[i]
             
 
-    if len(group) == 2 and group[0][2] == group[1][2]:
-        group[1][3] = group[0][3]
-        group[1][5] = nb_days(group[1][3],group[1][4])
-        to_delete.append(group[0][0])
-        to_insert.append(group[1][1:-1])
+    if len(group) == 2 and group[0][key_index['available']] == group[1][key_index['available']]:
+        group[1][key_index['start_date']] = group[0][key_index['start_date']]
+        group[1][5] = nb_days(group[1][key_index['start_date']],group[1][key_index['end_date']])
+        to_delete.append(group[0][key_index['cal_key']])
+        to_insert.append(group[1][key_index['listing_id']:key_index['state']])
         return None
 
 
 
-    #get start date of the new calendar
-    # additionally, we get the first old period and first new period to 
+    #On obtient les dates de début du nouveau et ancien calendrier
     beginning_date_of_new_calendar = None
     first_old = None
     first_new = None
@@ -151,9 +157,9 @@ def UpdateByListingGroup(group):
     first_new_index = None
 
     for i in range(len(group)):
-        if (group[i][9] == "new"):
+        if (group[i][key_index['state']] == "new"):
             first_new = group[i]
-            beginning_date_of_new_calendar = group[i][3]
+            beginning_date_of_new_calendar = group[i][key_index['start_date']]
             first_new_index = i
             break
 
@@ -161,22 +167,21 @@ def UpdateByListingGroup(group):
 
         #remove all periods that end before the new cal
         for i in reversed(range(len(group))):
-            ##legacy code : This is a case where we have a starting date of new calendar > the date we input in our Merging parameter
-            # In this case, it means that we have a  ~ 1-2 days closing outisde our intersection, that has to be dropped
-            if (group[i][4] < beginning_date_of_new_calendar):
+            #Cas du décalage par la gauche des anciennes dates
+            if (group[i][key_index['end_date']] < beginning_date_of_new_calendar):
                 group.pop(i)
                 number_of_lines_to_update -= 1
                 first_new_index-=1
             ##
 
-        #get index of first old date
         for i in reversed(range(len(group))):
-            if group[i][9] == "old":
+            if group[i][key_index['state']] == "old":
                 first_old = group[i].copy()
                 first_old_index = i
-        # if end dates are the same and open type is the same --> we want to push the old
-        # else, we create a buffer period into general case
-        if (first_old[4] == first_new[4] and first_old[2] == first_new[2]):
+        # Si les dates de fin sont les mêmes, avec le même état (fermé ou ouvert), on garde simplement old car
+        # c'est un hachage de l'ancienne date du au scrapping du nouveau mois
+        # Sinon, on crée une période qui complète le décalage de la gauche
+        if (first_old[key_index['end_date']] == first_new[key_index['end_date']] and first_old[key_index['available']] == first_new[key_index['available']]):
             if first_new_index > first_old_index:
                 group.pop(first_new_index)
                 group.pop(first_old_index)
@@ -186,19 +191,19 @@ def UpdateByListingGroup(group):
             
             number_of_lines_to_update -= 1
             number_of_new_lines -= 1
-        elif(first_old[3] < first_new[3]):
+        elif(first_old[key_index['start_date']] < first_new[key_index['start_date']]):
 
             buffer_period = first_new.copy()
-            buffer_period[2] = first_old[2]
-            buffer_period[3] = first_old[3]
-            buffer_period[4] = first_new[3]-timedelta(days=1)
-            buffer_period[5] = nb_days(buffer_period[3],buffer_period[4])
-            to_insert.append(buffer_period[1:-1])
+            buffer_period[key_index['available']] = first_old[key_index['available']]
+            buffer_period[key_index['start_date']] = first_old[key_index['start_date']]
+            buffer_period[key_index['end_date']] = first_new[key_index['start_date']]-timedelta(days=1)
+            buffer_period[key_index['num_day']] = nb_days(buffer_period[key_index['start_date']],buffer_period[key_index['end_date']])
+            to_insert.append(buffer_period[key_index['listing_id']:key_index['state']])
     
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
-            temp = group[u][1:-1]
+            temp = group[u][key_index['listing_id']:key_index['state']]
             to_insert.append(temp)
         return None    
     if(number_of_new_lines == 0):
@@ -206,86 +211,86 @@ def UpdateByListingGroup(group):
     #################################################
 
 
-    #Otherwise we iterate through all of the old to compare old and the rest of the dates (new)         
+    #Itération sur chaque old, et pour chaque old, on le compare avec tous les new       
     for i in range(number_of_lines_to_update):
         j = 0
-        while(group[j][9] == "new"):
+        while(group[j][key_index['state']] == "new"):
             j+=1
         
         old_to_update = group.pop(j)
-        #converting date strings to date objects
-        old_date_start = old_to_update[3]
-        old_date_end = old_to_update[4]
+        #Conversion des strings en date
+        old_date_start = old_to_update[key_index['start_date']]
+        old_date_end = old_to_update[key_index['end_date']]
 
 
         new_periods = []
         if(len(group) == 0):
-            to_delete.append(old_to_update[0])
+            to_delete.append(old_to_update[key_index['cal_key']])
             break
 
-        #for every new period
+        #Pour chaque nouvelle période
         for k in range(len(group)):
-            #converting date strings to date objects
-            new_date_start = group[k][3]
-            new_date_end = group[k][4]
+            #Conversion des strings en date
+            new_date_start = group[k][key_index['start_date']]
+            new_date_end = group[k][key_index['end_date']]
             
 
             number_days_new_period = nb_days(new_date_start,new_date_end)
             number_days_old_period = nb_days(old_date_start, old_date_end)
-            #si period match pas
+            #si periode match pas
             if (new_date_start > old_date_end):
                 #On prend le cas théorique où toutes les dates se suivent, il n'y a pas de trous.
                 #Dans le cas contraire, il faudrait ecrire pass. (problème d'input)
+                #Il n'y a pas eu de problème jusque là sur les deux années de calendrier.
                 break
             if(new_date_end<old_date_start):
                 break
             
-            #if we only have 1 new left and 1 old left, we append it as is
+            #Si il ne reste qu'un old et un new, on est sur le cas théorique sur décalage par la droite, donc on garde old
             if(i == number_of_lines_to_update-1 and k == len(group)-1):
                 break
 
-            #period dans les bornes
-            if(group[k][2] == "f"):
+            #periode dans les bornes
+            if(group[k][key_index['available']] == "f"):
                 if (new_date_start <= old_date_end):
                     if (nb_days(old_date_end,new_date_end)>MAX_NUMBER_OF_DAYS_WHEN_EXTENDING and new_date_end>=old_date_end):
 
-
-                        # creating 2 periods from one
-                        # first period from old_start to old_end
-                        # second period from old_end to new_end
-
-                        #case right extend
+                        #Cas d'extension par la droite d'une fermeture
+                        # Création de deux périodes
+                        # première periode de old_start à old_end
+                        # deuxième periode de old_end à new_end
                         if(new_date_start == old_date_start):
                             first_period = old_to_update.copy()
-                            first_period[2] = group[k][2]
+                            first_period[key_index['available']] = group[k][key_index['available']]
                             second_period = group[k].copy()
-                            second_period[3] = old_date_end+timedelta(days=1)
+                            second_period[key_index['start_date']] = old_date_end+timedelta(days=1)
 
-                            second_period[5] = nb_days(second_period[4],second_period[3])  
-                            new_periods.append(first_period[1:-1])
+                            second_period[key_index['num_day']] = nb_days(second_period[key_index['end_date']],second_period[key_index['start_date']])  
+                            new_periods.append(first_period[key_index['listing_id']:key_index['state']])
                             group.insert(k+1,second_period)
 
-                        #Case where there's an extension with no similar bounds for both start and end date
+                        #Case d'extension par la droite sans dates similaires
                         else:
 
                             first_period = group[k].copy()
-                            first_period[4] = old_date_end
-                            first_period[5] = nb_days(first_period[3],first_period[4])                 
+                            first_period[key_index['end_date']] = old_date_end
+                            first_period[key_index['num_day']] = nb_days(first_period[key_index['start_date']],first_period[key_index['end_date']])                 
                             second_period = group[k].copy()
 
-                            second_period[3] = old_date_end+timedelta(days=1)
-                            second_period[5] = nb_days(second_period[4],second_period[3])
-                            new_periods.append(first_period[1:-1])
+                            second_period[key_index['start_date']] = old_date_end+timedelta(days=1)
+                            second_period[key_index['num_day']] = nb_days(second_period[key_index['end_date']],second_period[key_index['start_date']])
+                            new_periods.append(first_period[key_index['listing_id']:key_index['state']])
                             group.insert(k+1,second_period)
-                    else:
-                        
-                        new_periods.append(group[k][1:-1])
+                    #extension de deux jours ou moins => On considère que la location s'est étendue et que ce n'est pas une nouvelle location
+                    else:       
+                        new_periods.append(group[k][key_index['listing_id']:key_index['state']])
+            #Période ouverte, on ne s'en occupe pas et on l'ajoute directement
             else:
-                new_periods.append(group[k][1:-1])
+                new_periods.append(group[k][key_index['listing_id']:key_index['state']])
                 
-        to_delete.append(old_to_update[0])
+        to_delete.append(old_to_update[key_index['cal_key']])
             
-        #append all new periods we created
+        #Insertion des nouvelles dates modifiées
         for period in new_periods:
             to_insert.append(period)
         for l in range(k):
@@ -294,8 +299,8 @@ def UpdateByListingGroup(group):
     #Verifier qu'on ne finit pas en laissant des dates "new" qui sont simplement en dehors de toute intersection avec les dates "old"
     #Cas : Old : du 20 janvier au 21 janvier , New : du 22 janvier au 23 janvier, Old : du 24 janvier au 26 janvier
     for remaining_date in group:
-        if(remaining_date[1:-1] not in to_insert):
-            to_insert.append(remaining_date[1:-1])
+        if(remaining_date[key_index['listing_id']:key_index['state']] not in to_insert):
+            to_insert.append(remaining_date[key_index['listing_id']:key_index['state']])
     return None
 
 
@@ -316,7 +321,7 @@ def ProcessAndSave(fileNameDate,SavedName,newCalendar):
         delete.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv", index = False)
         return insert
 
-#EXEMPLE
+#EXEMPLE of Individual execution of merging
 #start_time = time.time()
-#Merging('./datasets/c09.csv')
+#Merging('./datasets/NameoftheFile')
 #print("---  %s seconds ---" % (time.time() - start_time))
