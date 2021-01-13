@@ -90,4 +90,4 @@ def DownloadAllDatesets(startDate,endDate=None):
 
 
 if __name__ == "__main__":
-    DownloadAllDatesets('2016-12-01','2017-01-01')
+    print(DownloadDaily())

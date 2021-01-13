@@ -1,21 +1,20 @@
 import os
 import gzip
 import time
+import shutil
+import pandas as pd
+from dateutil import relativedelta
+from datetime import datetime, timedelta
+
 import ImportListing
 import OptimizeCalendar
 import LabelizePeriods
 import DownloadDatasets
 import Validation
 import MergeCalendar
-import Merge_V3
 import DatabaseConnector
 import ConvertReviews
 import Proba
-import datetime
-import pandas as pd
-from dateutil import relativedelta
-import shutil
-from datetime import datetime, timedelta
 
 datasets = ['listings','reviews','calendar']
 
@@ -35,7 +34,7 @@ DATABASE_CALENDARS_COLUMNS = [
 
 
 '''
-Create folder for saveing .csv
+Create folder for saving .csv
 '''
 def CreateFolder(folderName):
     try:
@@ -90,7 +89,7 @@ def ProcessDatasets(date):
     start_time = time.time()
     print('------- Start of calendar process -------')
     optimizedCalendar = OptimizeCalendar.ProcessAndSave(fileNameDate,'optimized_calendar')
-    mergedCalendar = Merge_V3.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
+    mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
     DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATABASE_CALENDARS_COLUMNS)
@@ -126,13 +125,6 @@ def CreateFolder(date):
         print(f'Cannot process this date : {date.strftime("%Y-%m-%d")}')
 
 
-'''
-Process the daily importation
-'''
-def ProcessDaily():
-    date = datetime.date.today()
-    ProcessDatasets(date)
-
 def ProcessDateRange(startDate,endDate):
     startDate = datetime.strptime(startDate,"%Y-%m-%d").date()
     endDate = datetime.strptime(endDate,"%Y-%m-%d").date()
@@ -141,6 +133,7 @@ def ProcessDateRange(startDate,endDate):
         ProcessDatasets(startDate)
         print(f'------------------------ {startDate.strftime("%Y-%m-%d")} processing time : {(time.time() - start_time)} seconds -------------------------')
         startDate = startDate + relativedelta.relativedelta(months=1)
+
 
 if __name__ == "__main__":
     ProcessDateRange('2017-01-01','2017-03-01')

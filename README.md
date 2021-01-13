@@ -21,21 +21,97 @@ To access and visualize the database, you can use [pgAdmin](https://www.pgadmin.
   - **datasets/listings**: Regroup listings datasets
   - **datasets/reviews**: Regroup reviews datasets
   - **datasets/calendar**: Regroup calendars datasets
-- **tests**: All the tests files that you have
+- **tests**: All the tests files
+- **notebook**: All the files containing ideas to be implemented
 
-## Getting Started with Power BI
+## Getting Started
 
-1. Download the latest version of the postgres ODBC driver [here](https://www.postgresql.org/ftp/odbc/versions/msi/) and run the msi file.
-2. On Power BI select the `ODBC` data importation.
-![Power-BI-to-PostgreSQL-4-1](https://user-images.githubusercontent.com/45569127/96734811-31c8fe00-13bb-11eb-91cd-ab6fccc28ac1.png)
-
-
-3. Select Data source as `None` and set the connection string with:
+1. Create a table `calendars` on your database :
+``` SQL
+CREATE TABLE public.calendars
+(
+    cal_key serial,
+    listing_id integer,
+    available text COLLATE pg_catalog."default",
+    start_date date,
+    end_date date,
+    num_day integer,
+    minimum_nights double precision,
+    maximum_nights double precision,
+    label text COLLATE pg_catalog."default",
+    validation boolean DEFAULT false,
+    proba double precision,
+    ext_validation double precision DEFAULT 0.0,
+    CONSTRAINT calendars_pkey PRIMARY KEY (cal_key)
+)
 ```
-Driver={PostgreSQL ANSI(x64)};Server=DATABASE_HOST;Port=5432;Database=airbnb
+
+2. Create a table `listings` on your database :
+``` SQL
+CREATE TABLE public.listings
+(
+    id integer NOT NULL,
+    listing_url text COLLATE pg_catalog."default",
+    scrape_id bigint,
+    last_scraped text COLLATE pg_catalog."default",
+    name text COLLATE pg_catalog."default",
+    description text COLLATE pg_catalog."default",
+    neighborhood_overview text COLLATE pg_catalog."default",
+    host_id integer,
+    host_acceptance_rate text COLLATE pg_catalog."default",
+    host_listings_count integer,
+    neighbourhood text COLLATE pg_catalog."default",
+    neighbourhood_cleansed text COLLATE pg_catalog."default",
+    neighbourhood_group_cleansed text COLLATE pg_catalog."default",
+    latitude double precision,
+    longitude double precision,
+    property_type text COLLATE pg_catalog."default",
+    room_type text COLLATE pg_catalog."default",
+    minimum_nights integer,
+    maximum_nights integer,
+    calendar_updated text COLLATE pg_catalog."default",
+    has_availability text COLLATE pg_catalog."default",
+    availability_365 integer,
+    calendar_last_scraped text COLLATE pg_catalog."default",
+    number_of_reviews integer,
+    first_review text COLLATE pg_catalog."default",
+    last_review text COLLATE pg_catalog."default",
+    license text COLLATE pg_catalog."default",
+    instant_bookable text COLLATE pg_catalog."default",
+    calculated_host_listings_count integer,
+    reviews_per_month double precision,
+    CONSTRAINT id PRIMARY KEY (id)
+)
 ```
-Don't forget to change `DATABASE_HOST` with the ip of your database.
 
-![Power-BI-to-PostgreSQL-5](https://user-images.githubusercontent.com/45569127/96735985-6ee1c000-13bc-11eb-9ef5-04a651d02094.png)
+2. Create a table `results` on your database :
+``` SQL
+CREATE TABLE public.results
+(
+    extraction_date date,
+    listing_id integer,
+    past12_m50 integer,
+    past12_m75 integer,
+    past12_m95 integer,
+    past12_m100 integer,
+    past12_m95_e75 integer,
+    past12_m100_e75 integer,
+    civil_m50 integer,
+    civil_m75 integer,
+    civil_m95 integer,
+    civil_m100 integer,
+    civil_m95_e75 integer,
+    civil_m100_e75 integer,
+    predict_m50 integer,
+    predict_m75 integer,
+    predict_m95 integer
+)
+```
 
-4. Add your username and password to get access to the table.
+### Daily execution
+
+This project has been created in such a way that it can be run every day. To process the data present on InsideAirbnb yesterday, just run the `Daily.py` file. To automate this execution, you can schedule it. 
+
+> For Windows, you can for example follow [this tutorial](https://www.jcchouinard.com/python-automation-using-task-scheduler/).
+
+On average, the script execution time to retrieve the files and do the processing is 30 minutes. Your computer will still be usable because Python uses only one core to run.

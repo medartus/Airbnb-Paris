@@ -36,8 +36,8 @@ def PreprocessCalendar(df):
 	    else:
 	        available = 'f'
 	    new_result.append([listing_id,available,start,end,nb_days,1,1000])
-	    real_df = pd.DataFrame(new_result, columns=["listing_id","available","start","end","num_day","minimum_nights","maximum_nights"])
-	return new_result
+	real_df = pd.DataFrame(new_result, columns=["listing_id","available","start","end","num_day","minimum_nights","maximum_nights"])
+	return real_df
 
 # df = pd.read_excel("airbnb_calendriers.xlsx")
 # New_Calendar = PreprocessCalendar(df)

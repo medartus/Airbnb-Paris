@@ -10,3 +10,5 @@ assets/
 *.css
 *.pyc
 .pytest_cache/
+rendu/
+plop.py

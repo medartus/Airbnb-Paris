@@ -23,7 +23,6 @@ def AdjustProbaInstantBooking(row, listing, adjustedProba):
             adjustedProba += (1-adjustedProba)*0.3              #The formula is likely to change
     except:
         pass
-        # print(row["listing_id"])
     return adjustedProba
 
 

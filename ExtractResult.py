@@ -1,7 +1,8 @@
+import os
 import datetime
-from dateutil import relativedelta
 import pandas as pd
 import DatabaseConnector
+from dateutil import relativedelta
 
 DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
@@ -116,22 +117,27 @@ def ExportResult(queryDate):
 
     return pd.concat([estimatedPast12, estimatedCivil, estimatedPredict], axis=1).fillna(0).astype(int)
 
+
+def CreateFolder(folderName):
+    try:
+        os.mkdir(f'./datasets/{folderName}')
+    except:
+        pass
+
 def SaveResult(queryDate, result, exportFormatList, filename=None):
+    CreateFolder('export')
     for exportFormat in exportFormatList:
         if exportFormat == "csv":
-            result.to_csv(f"./datasets/altered/{filename}.csv")
+            result.to_csv(f"./datasets/export/{filename}.csv")
         if exportFormat == "excel":
-            result.to_excel(f"./datasets/altered/{filename}.xlsx")
+            result.to_excel(f"./datasets/export/{filename}.xlsx")
         if exportFormat == "database":
             result['extraction_date'] = queryDate
             listResult = result.values.tolist()
             DatabaseConnector.Execute(f'DELETE FROM results WHERE extraction_date = {queryDate}')
             DatabaseConnector.Insert(listResult,'results',DATABASE_RESULTS_COLUMNS)
 
-queryDate = '2018-12-01'
-result = ExportResult(queryDate)
-SaveResult(queryDate,result,['csv','excel'],'TestExport')
-# queryDate = '2020-09-28'
-# result = ExportResult(queryDate)
-# # result.to_csv("./datasets/altered/plop.csv")
-# result.to_excel("./datasets/altered/plop.xlsx")
+if __name__ == "__main__":
+    queryDate = '2018-12-01'
+    result = ExportResult(queryDate)
+    SaveResult(queryDate,result,['csv','excel'],'TestExport')

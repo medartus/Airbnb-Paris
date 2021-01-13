@@ -126,8 +126,7 @@ def ProcessAndSave(fileNameDate,SavedName,calendar):
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        # df = ValidateWithExternalReviews(calendar)
-        calendar['ext_validation'] = 0
+        df = ValidateWithExternalReviews(calendar)
         df = calendar
         print(f'--- External validation {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
