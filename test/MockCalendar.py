@@ -223,25 +223,26 @@ New : Has Data
 Old : Has Data
 Right extension with period split into two periods
 '''
-# def Mock9():
-#     old = [
-#         [125,9342,'f','2017-07-17','2017-07-18',2,0.0,1125.0,'L7'],
-#         [126,9342,'f','2017-07-19','2017-07-20',2,0.0,1125.0,'L7'], #Modif
-#         [127,9342,'t','2017-07-21','2017-07-28',8,0.0,1125.0,'A'],  #Modif
-#         [128,9342,'f','2017-07-28','2017-07-29',2,0.0,1125.0,'L7'],
-#     ]
-#     new = [
-#         [9342,'f','2017-07-17','2017-07-18',2,0.0,1125.0,'L7'],
-#         [9342,'f','2017-07-19','2017-07-26',8,0.0,1125.0,'L14'],    #Modif
-#         [9342,'t','2017-07-27','2017-07-28',2,0.0,1125.0,'A'],      #Modif
-#         [9342,'f','2017-07-28','2017-07-29',2,0.0,1125.0,'L7'],
-#     ]
-#     to_insert = [
-#         [9342,'f','2017-07-21','2017-07-26',6,0.0,1125.0,'L7'],
-#         [9342,'t','2017-07-27','2017-07-28',2,0.0,1125.0,'A'],
-#     ]
-#     to_delete = [127]
-#     return CreateMock(new, old, to_insert, to_delete)
+def Mock9():
+ old = [
+     [125,9342,'f','2017-07-17','2017-07-18',2,0.0,1125.0,'L7'],
+     [126,9342,'f','2017-07-19','2017-07-20',2,0.0,1125.0,'L7'], #Modif
+     [127,9342,'t','2017-07-21','2017-07-28',8,0.0,1125.0,'A'],  #Modif
+     [128,9342,'f','2017-07-28','2017-07-29',2,0.0,1125.0,'L7'],
+ ]
+ new = [
+     [9342,'f','2017-07-17','2017-07-18',2,0.0,1125.0,'L7'],
+     [9342,'f','2017-07-19','2017-07-26',8,0.0,1125.0,'L14'],    #Modif
+     [9342,'t','2017-07-27','2017-07-28',2,0.0,1125.0,'A'],      #Modif
+     [9342,'f','2017-07-28','2017-07-29',2,0.0,1125.0,'L7'],
+ ]
+ to_insert = [
+     [9342,'f','2017-07-19','2017-07-20',2,0.0,1125.0,'L7'],
+     [9342,'f','2017-07-21','2017-07-26',6,0.0,1125.0,'L7'],
+     [9342,'t','2017-07-27','2017-07-28',2,0.0,1125.0,'A'],
+ ]
+ to_delete = [126,127]
+ return CreateMock(new, old, to_insert, to_delete)
 
 
 '''
@@ -570,7 +571,7 @@ def Mock20():
 '''
 New : Has Data
 Old : Has Data
-Case 21: ALEEEEEEEEEEEEEEEEEED
+Case 21
 '''
 def Mock21():
     old = [
@@ -727,22 +728,8 @@ def Mock25():
 New : Has Data
 Old : Has Data
 Case 26: 
-- Swapping a day between a free period to a reserved period : 
-    should add the day to the reserved period instead of creating a new one
-- Splitting a long reserved period with some available days inside:
-    should create 2 new periods around the new free period
-- Reserving the end of an free period:
-    should shorten the free period and add the new reserved period
-https://puu.sh/GVspG/7d5649e844.png
-
-potentially unwanted result --> first date handling, creates a buffer that forces 
-a 1 day period, this works with the format, however the periods seem weird.
-This is a rare edge case, with no simple fix due to the way we handle the
-general case.
-It might be interesting to add a way to detect left extensions in the general
-case as we do with the right ext. 
-!!! SHOULD BE DISCUSSED !!!
-(doesn't happen that frequently)
+Swapping a day between a free period to a reserved period
+https://i.imgur.com/oqMt4a2.png
 '''
 def Mock26():
     old = [
@@ -779,46 +766,12 @@ def Mock26():
         [19342,'f','2017-08-22','2017-08-31',10,0.0,1125.0,'L14']
     ]
 
-    # old one
-    """to_insert = [
-        [19342,'t','2017-06-20','2017-06-29',10,0.0,1125.0,'A'],
-        [19342,'f','2017-06-30','2017-07-05',6,0.0,1125.0,'L7'],
-        [19342,'f','2017-07-06','2017-07-09',4,0.0,1125.0,'L7'],
-        [19342,'f','2017-07-10','2017-07-11',2,0.0,1125.0,'L7'],
-        [19342,'t','2017-07-12','2017-07-14',3,0.0,1125.0,'A'],
-        [19342,'f','2017-07-15','2017-07-23',9,0.0,1125.0,'L14'],
-        [19342,'f','2017-07-24','2017-07-31',8,0.0,1125.0,'L7'],
-        [19342,'t','2017-08-01','2017-08-11',11,0.0,1125.0,'A'],
-        [19342,'f','2017-08-12','2017-08-14',20,0.0,1125.0,'L21'],
-        [19342,'f','2017-08-15','2017-08-18',4,0.0,1125.0,'L7'],
-        [19342,'f','2017-08-19','2017-08-21',3,0.0,1125.0,'L7'],
-        [19342,'f','2017-08-22','2017-08-31',10,0.0,1125.0,'L14']
-    ]"""
     to_delete = [120,121,122,123,124,125,126,127,128]
     return CreateMock(new, old, to_insert, to_delete) 
 
-"""def Mock26():
-    old = [
-        [120,19342,'f','2017-06-10','2017-06-20',11,0.0,1125.0,'A'],
-        [121,19342,'f','2017-06-21','2017-06-30',10,0.0,1125.0,'A'],
-    ]
-    new = [
-        [19342,'f','2017-06-10','2017-06-19',10,0.0,1125.0,'A'],
-        [19342,'f','2017-06-20','2017-06-30',11,0.0,1125.0,'A'],
-        [19342,'f','2017-07-01','2017-07-05',5,0.0,1125.0,'A'],
-    ]
-    to_insert = [
-    ]
-    to_delete = [120,121]
-    return CreateMock(new, old, to_insert, to_delete) """
-'''
-https://puu.sh/GVsxf/fc7698e701.png
-'''
 def Mock27():
-#WE CANNOT GET A DATE OLD THAT DOESNT HAVE AN INTERSECTION WITH NEW AT THE BEGINNING
-#        [120,249304,'t','2017-01-04','2017-01-16',13,0,1125,'A']
     old = [
-
+        [120,249304,'t','2017-01-04','2017-01-16',13,0,1125,'A'],
         [121,249304,'f','2017-01-17','2018-01-03',352,0,1125,'M21']
     ]
     new = [
@@ -831,7 +784,7 @@ def Mock27():
     return CreateMock(new, old, to_insert, to_delete)
 
 '''
-https://puu.sh/GVsOf/d1bf1d8a96.png
+https://i.imgur.com/cbPKQLU.png
 same as 26
 '''
 def Mock28():
@@ -901,10 +854,8 @@ def Mock29():
     to_delete = [121,122]
     return CreateMock(new, old, to_insert, to_delete)
 
-    
-
 '''
-https://puu.sh/GVsX1/5c294b1af1.png
+https://i.imgur.com/PvVwT86.png  
 '''
 def Mock30():
     old = [
@@ -920,7 +871,8 @@ def Mock30():
     ]
 
     to_insert = [
-        [12431613,'f','2017-01-04','2017-03-02',58,0,1125,'M21'],
+        [12431613,'f','2017-01-04','2017-02-06',34,0,1125,'M21'],
+        [12431613,'f','2017-02-07','2017-03-02',24,0,1125,'M21'],
         [12431613,'f','2017-03-03','2017-03-05',3,0,1125,'L7'],
         [12431613,'f','2017-03-06','2017-03-12',7,0,1125,'L14'],
         [12431613,'t','2017-03-13','2017-03-15',3,0,1125,'A'],

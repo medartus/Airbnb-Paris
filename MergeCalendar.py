@@ -140,12 +140,7 @@ def UpdateByListingGroup(group):
             del group[i]
             
 
-    if len(group) == 2 and group[0][key_index['available']] == group[1][key_index['available']]:
-        group[1][key_index['start_date']] = group[0][key_index['start_date']]
-        group[1][5] = nb_days(group[1][key_index['start_date']],group[1][key_index['end_date']])
-        to_delete.append(group[0][key_index['cal_key']])
-        to_insert.append(group[1][key_index['listing_id']:key_index['state']])
-        return None
+
 
 
 
@@ -173,6 +168,14 @@ def UpdateByListingGroup(group):
                 number_of_lines_to_update -= 1
                 first_new_index-=1
             ##
+        #On vérifie qu'après les sections par la droite puis par la gauche, il ne reste pas deux dates, ce qui reviendrait
+        # à gérer le cas du n°27
+        if len(group) == 2 and group[0][key_index['available']] == group[1][key_index['available']]:
+            group[1][key_index['start_date']] = group[0][key_index['start_date']]
+            group[1][5] = nb_days(group[1][key_index['start_date']],group[1][key_index['end_date']])
+            to_delete.append(group[0][key_index['cal_key']])
+            to_insert.append(group[1][key_index['listing_id']:key_index['state']])
+            return None
 
         for i in reversed(range(len(group))):
             if group[i][key_index['state']] == "old":
@@ -191,8 +194,7 @@ def UpdateByListingGroup(group):
             
             number_of_lines_to_update -= 1
             number_of_new_lines -= 1
-        elif(first_old[key_index['start_date']] < first_new[key_index['start_date']]):
-
+        elif(first_old[key_index['start_date']] < first_new[key_index['start_date']]):        
             buffer_period = first_new.copy()
             buffer_period[key_index['available']] = first_old[key_index['available']]
             buffer_period[key_index['start_date']] = first_old[key_index['start_date']]
@@ -325,3 +327,25 @@ def ProcessAndSave(fileNameDate,SavedName,newCalendar):
 #start_time = time.time()
 #Merging('./datasets/NameoftheFile')
 #print("---  %s seconds ---" % (time.time() - start_time))
+
+
+
+
+#Alternative code for ligne 195 to 200
+#In case you want to avoid cutting a date 
+'''            if(first_old[key_index['end_date']] < first_new[key_index['end_date']] 
+                and first_old[key_index['available']] == first_new[key_index['available']]
+                and first_old[key_index['available']] == "f"):
+                first_new[key_index['start_date']] = first_old[key_index['end_date']]+timedelta(days =1)
+                first_new[key_index['num_day']] = nb_days(first_new[key_index['start_date']],first_new[key_index['end_date']])
+                group.pop(first_old_index)
+                number_of_lines_to_update -= 1
+                
+            else:          
+                buffer_period = first_new.copy()
+                buffer_period[key_index['available']] = first_old[key_index['available']]
+                buffer_period[key_index['start_date']] = first_old[key_index['start_date']]
+                buffer_period[key_index['end_date']] = first_new[key_index['start_date']]-timedelta(days=1)
+                buffer_period[key_index['num_day']] = nb_days(buffer_period[key_index['start_date']],buffer_period[key_index['end_date']])
+                to_insert.append(buffer_period[key_index['listing_id']:key_index['state']])'''
+#Making this change will make test 29 and 30 fail. This is normal, since the output should be different.
