@@ -139,11 +139,6 @@ def UpdateByListingGroup(group):
             to_insert.append(group[i][1:-1])
             del group[i]
             
-
-
-
-
-
     #On obtient les dates de début du nouveau et ancien calendrier
     beginning_date_of_new_calendar = None
     first_old = None
@@ -171,37 +166,46 @@ def UpdateByListingGroup(group):
         #On vérifie qu'après les sections par la droite puis par la gauche, il ne reste pas deux dates, ce qui reviendrait
         # à gérer le cas du n°27
         if len(group) == 2 and group[0][key_index['available']] == group[1][key_index['available']]:
-            group[1][key_index['start_date']] = group[0][key_index['start_date']]
-            group[1][5] = nb_days(group[1][key_index['start_date']],group[1][key_index['end_date']])
-            to_delete.append(group[0][key_index['cal_key']])
-            to_insert.append(group[1][key_index['listing_id']:key_index['state']])
+            if group[0][key_index['state']] == "old":
+                old_to_update = group[0].copy()
+                new_to_insert = group[1].copy()
+                new_to_insert[key_index['start_date']] = old_to_update[key_index['start_date']]
+                new_to_insert[key_index['num_day']] = nb_days(new_to_insert[key_index['start_date']],new_to_insert[key_index['end_date']])
+                to_delete.append(old_to_update[key_index['cal_key']])
+                to_insert.append(new_to_insert[key_index['listing_id']:key_index['state']])
+            else:
+                old_to_update = group[1].copy()
+                new_to_insert = group[0].copy()
+                to_delete.append(old_to_update[key_index['cal_key']])
+                to_insert.append(new_to_insert[key_index['listing_id']:key_index['state']])
             return None
 
-        for i in reversed(range(len(group))):
-            if group[i][key_index['state']] == "old":
-                first_old = group[i].copy()
-                first_old_index = i
-        # Si les dates de fin sont les mêmes, avec le même état (fermé ou ouvert), on garde simplement old car
-        # c'est un hachage de l'ancienne date du au scrapping du nouveau mois
-        # Sinon, on crée une période qui complète le décalage de la gauche
-        if (first_old[key_index['end_date']] == first_new[key_index['end_date']] and first_old[key_index['available']] == first_new[key_index['available']]):
-            if first_new_index > first_old_index:
-                group.pop(first_new_index)
-                group.pop(first_old_index)
-            else:
-                group.pop(first_old_index)
-                group.pop(first_new_index)
-            
-            number_of_lines_to_update -= 1
-            number_of_new_lines -= 1
-        elif(first_old[key_index['start_date']] < first_new[key_index['start_date']]):        
-            buffer_period = first_new.copy()
-            buffer_period[key_index['available']] = first_old[key_index['available']]
-            buffer_period[key_index['start_date']] = first_old[key_index['start_date']]
-            buffer_period[key_index['end_date']] = first_new[key_index['start_date']]-timedelta(days=1)
-            buffer_period[key_index['num_day']] = nb_days(buffer_period[key_index['start_date']],buffer_period[key_index['end_date']])
-            to_insert.append(buffer_period[key_index['listing_id']:key_index['state']])
-    
+        else:
+            for i in reversed(range(len(group))):
+                if group[i][key_index['state']] == "old":
+                    first_old = group[i].copy()
+                    first_old_index = i
+            # Si les dates de fin sont les mêmes, avec le même état (fermé ou ouvert), on garde simplement old car
+            # c'est un hachage de l'ancienne date du au scrapping du nouveau mois
+            # Sinon, on crée une période qui complète le décalage de la gauche
+            if (first_old[key_index['end_date']] == first_new[key_index['end_date']] and first_old[key_index['available']] == first_new[key_index['available']]):
+                if first_new_index > first_old_index:
+                    group.pop(first_new_index)
+                    group.pop(first_old_index)
+                else:
+                    group.pop(first_old_index)
+                    group.pop(first_new_index)
+                
+                number_of_lines_to_update -= 1
+                number_of_new_lines -= 1
+            elif(first_old[key_index['start_date']] < first_new[key_index['start_date']]):        
+                buffer_period = first_new.copy()
+                buffer_period[key_index['available']] = first_old[key_index['available']]
+                buffer_period[key_index['start_date']] = first_old[key_index['start_date']]
+                buffer_period[key_index['end_date']] = first_new[key_index['start_date']]-timedelta(days=1)
+                buffer_period[key_index['num_day']] = nb_days(buffer_period[key_index['start_date']],buffer_period[key_index['end_date']])
+                to_insert.append(buffer_period[key_index['listing_id']:key_index['state']])
+        
     #################################################
     if(number_of_lines_to_update == 0):
         for u in range(len(group)):
