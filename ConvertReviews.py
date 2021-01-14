@@ -46,8 +46,8 @@ def GetValidationId():
     return validationTable
 
     
-def ProcessReviews(date):
-    reviews = pd.read_csv('./datasets/reviews/reviews-2020-09.csv',sep=",")
+def ProcessReviews(fileNameDate,date):
+    reviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
     reviews = reviews.drop(['id','reviewer_id','reviewer_name','comments'], axis=1)
     reviews = reviews.rename({"listing_id":"id","date":"date_com"},axis=1)
     reviews['date_com'] =  pd.to_datetime(reviews['date_com'], format='%Y-%m-%d')
@@ -92,9 +92,9 @@ def RetrieveReviews(groupedList, dictCom, row):
     temp = np.insert(temp, 3, values=row['corresp'], axis=1)
     return np.append(groupedList,temp)
 
-def GroupReviews(date):
+def GroupReviews(fileNameDate,date):
     dictCom = {}
-    dictCom['Airbnb'] = ProcessReviews(date)
+    dictCom['Airbnb'] = ProcessReviews(fileNameDate,date)
     # dictCom['Booking'] = ProcessBooking(date)
     dictCom['Abritel'] = ProcessAbritel(date)
 
@@ -111,12 +111,14 @@ def GroupReviews(date):
 
     return grouped
 
-def ValidateWithExternalReviews(calendar):
-    date = Validation.get_last_day(calendar)
-    groupedReviews = GroupReviews(date)
+def ValidateWithExternalReviews(fileNameDate,calendar):
+    date = calendar['end_date'].min()
+    groupedReviews = GroupReviews(fileNameDate,date)
+
     groupedReviews['listing_id'] = groupedReviews['listing_id'].astype(int)
     groupedReviews['corresp'] = groupedReviews['corresp'].astype(int)
     groupedReviews['corresp'] = groupedReviews['corresp']/100
+
     return Validation.validateExternalCalendar(calendar,groupedReviews)
 
 def ProcessAndSave(fileNameDate,SavedName,calendar):
@@ -126,8 +128,7 @@ def ProcessAndSave(fileNameDate,SavedName,calendar):
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
-        df = ValidateWithExternalReviews(calendar)
-        df = calendar
+        df = ValidateWithExternalReviews(fileNameDate,calendar)
         print(f'--- External validation {fileNameDate} : {time.time() - start_time} ---')
         df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df

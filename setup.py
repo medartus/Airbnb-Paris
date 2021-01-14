@@ -29,7 +29,8 @@ DATABASE_CALENDARS_COLUMNS = [
     "label",
 	"proba",
     "validation",
-    "ext_validation"
+    "ext_validation",
+    "cal_key"
 ]
 
 
@@ -92,6 +93,7 @@ def ProcessDatasets(date):
     mergedCalendar = MergeCalendar.ProcessAndSave(fileNameDate,'merged_calendar',optimizedCalendar)
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
+    probaCalendar['cal_key'] = probaCalendar['listing_id'].astype(str) + '_' + probaCalendar['start_date'].astype(str)
     DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATABASE_CALENDARS_COLUMNS)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
@@ -136,7 +138,7 @@ def ProcessDateRange(startDate,endDate):
 
 
 if __name__ == "__main__":
-    ProcessDateRange('2017-01-01','2017-03-01')
+    ProcessDateRange('2017-04-01','2017-06-01')
 
     # period = "2017-02" 
     # date = datetime.strptime(period, "%Y-%m")

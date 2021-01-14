@@ -52,11 +52,11 @@ def ExecQueryBatch(query, params_list):
     conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (HOST, DATABASE, USER, PASSWORD))
     cur = conn.cursor()
 
-    try:
-        psycopg2.extras.execute_batch(cur, query, params_list)
-        conn.commit()
-    except Exception as error:
-        print(error)
+    # try:
+    psycopg2.extras.execute_batch(cur, query, params_list)
+    conn.commit()
+    # except Exception as error:
+    #     print(error)
 
     conn.close()
 
@@ -64,11 +64,12 @@ def ExecQueryBatch(query, params_list):
 def InsertOrUpdate(tableName, columns, values):
     query = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s) ON CONFLICT ON CONSTRAINT id DO UPDATE SET "+FormatExcludeUpdate(columns)+";"
     params_list = [tuple(value) for value in values]
-    ExecQueryBatch(query, values)
+    ExecQueryBatch(query, params_list)
 
 def CalendarDelete(data):
     query_to_delete = "DELETE FROM calendars WHERE cal_key = %s"
-    ExecQueryBatch(query_to_delete, data)
+    params_list = [(value,) for value in data]
+    ExecQueryBatch(query_to_delete, params_list)
 
 def Insert(data,tableName,columns):
     query_to_insert = "INSERT INTO "+tableName+" ("+FormatInsert(columns)+") VALUES ("+"%s,"*(len(columns)-1)+"%s);"
@@ -92,12 +93,12 @@ def Execute(query):
     cur = conn.cursor()
 
     res = []
-    try:
-        cur.execute(query)
-        conn.commit()
-        res = cur.fetchall()
-    except Exception as error:
-        print(error)
+    # try:
+    cur.execute(query)
+    conn.commit()
+    res = cur.fetchall()
+    # except Exception as error:
+    #     print(error)
 
     # Close connection
     conn.close()

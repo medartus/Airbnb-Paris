@@ -54,10 +54,12 @@ def Merging(new_calendar):
     #Utilisation typique de la fonction de merging
     else:
         to_insert,to_delete = MergeTwoCalendars(old_calendar,new_calendar)
+        pd.DataFrame(to_delete,columns=['cal_key']).to_csv(f"./test.csv", index = False)
         DatabaseConnector.CalendarDelete(to_delete)
+        time.sleep(10)
         to_insert = pd.DataFrame(to_insert,columns=DATABASE_CALENDARS_COLUMNS[1:])
-
-    to_delete = pd.DataFrame(to_delete,columns='cal_key')
+    
+    to_delete = pd.DataFrame(to_delete,columns=['cal_key'])
     return to_insert, to_delete
 
 
@@ -87,7 +89,7 @@ def MergeTwoCalendars(old_calendar,new_calendar):
     #Application de la fonction de détection des changements de date pour chaque listing_id. 
     #On retourne une liste que l'on va traiter par la suite
     concat_cal.cal_key = concat_cal.cal_key.fillna(0)
-    concat_cal.cal_key = concat_cal.cal_key.astype(int)
+    # concat_cal.cal_key = concat_cal.cal_key.astype(int)
     concat_cal.groupby("listing_id").apply(UpdateByListingGroup)
 
     return to_insert,to_delete
@@ -315,8 +317,10 @@ def ProcessAndSave(fileNameDate,SavedName,newCalendar):
     existsDelete = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv") 
     if existsInsert and existsDelete:
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv ---')
-        delete = pd.read_csv('./datasets/listings/listings-'+filename+'.csv',sep=",")
-        DatabaseConnector.CalendarDelete(delete.tolist())
+        delete = pd.read_csv(f'./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv',sep=",")
+        if not delete.empty:
+            DatabaseConnector.CalendarDelete(delete['cal_key'].to_list())
+            time.sleep(10)
         print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv ---')
         return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv",sep=",")
     else:
