@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 import time
 import os
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 '''
 Create the result for period grouping
@@ -12,7 +17,7 @@ def groupDate(group):
 Import the calendar dataset and group by open/closed period to remove useless data
 '''
 def OptimizeCalendar(filename):
-    calendar = pd.read_csv('./datasets/calendar/calendar-'+filename+'.csv',sep=",")
+    calendar = pd.read_csv(f'{DatasetsFolderPath}/calendar/calendar-{filename}.csv',sep=",")
 
     calendar = calendar.sort_values(by=["listing_id", "date"])
     calendar = calendar.reset_index()
@@ -32,15 +37,15 @@ def OptimizeCalendar(filename):
     return newData
 
 def ProcessAndSave(fileNameDate,SavedName):
-    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         df = OptimizeCalendar(fileNameDate)
         print(f'--- Optimizing {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        df.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 
@@ -50,4 +55,3 @@ if __name__ == "__main__":
     start_time = time.time()
     newData = OptimizeCalendar("calendar-2017-01")
     print("---  %s seconds ---" % (time.time() - start_time))
-#newData.to_csv("./datasets/calendar_periods.csv",index=False)

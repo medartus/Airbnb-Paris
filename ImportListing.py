@@ -1,6 +1,11 @@
 import pandas as pd
 import DatabaseConnector
 import datetime as dt
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 # List of columns kept in the database for listings dataset
 DATABASE_LISTINGS_COLUMNS = [
@@ -40,7 +45,7 @@ DATABASE_LISTINGS_COLUMNS = [
 Retrieve the listings file from de dataset folder
 '''   
 def RetrieveListings(filename):
-    listings = pd.read_csv('./datasets/listings/listings-'+filename+'.csv',sep=",")
+    listings = pd.read_csv(f'{DatasetsFolderPath}/listings/listings-{filename}.csv',sep=",")
     return listings[DATABASE_LISTINGS_COLUMNS]
 
 '''

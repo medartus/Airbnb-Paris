@@ -3,6 +3,11 @@ import datetime
 import pandas as pd
 import DatabaseConnector
 from dateutil import relativedelta
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 DATABASE_CALENDARS_COLUMNS = [
     "listing_id",
@@ -15,7 +20,7 @@ DATABASE_CALENDARS_COLUMNS = [
     "label",
     "validation",
 	"proba"
-    # "ext_validation"
+    "ext_validation"
 ]
 
 DATABASE_RESULTS_COLUMNS = [
@@ -120,7 +125,7 @@ def ExportResult(queryDate):
 
 def CreateFolder(folderName):
     try:
-        os.mkdir(f'./datasets/{folderName}')
+        os.mkdir(f'{DatasetsFolderPath}/{folderName}')
     except:
         pass
 
@@ -128,9 +133,9 @@ def SaveResult(queryDate, result, exportFormatList, filename=None):
     CreateFolder('export')
     for exportFormat in exportFormatList:
         if exportFormat == "csv":
-            result.to_csv(f"./datasets/export/{filename}.csv")
+            result.to_csv(f"{DatasetsFolderPath}/export/{filename}.csv")
         if exportFormat == "excel":
-            result.to_excel(f"./datasets/export/{filename}.xlsx")
+            result.to_excel(f"{DatasetsFolderPath}/export/{filename}.xlsx")
         if exportFormat == "database":
             result['extraction_date'] = queryDate
             listResult = result.values.tolist()

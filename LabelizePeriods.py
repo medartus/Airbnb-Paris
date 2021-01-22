@@ -1,6 +1,11 @@
 import pandas as pd
 import time
 import os
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 '''
 Apply labelization to a given line/period
@@ -40,22 +45,22 @@ def labelize(calendar_per):
     return calendar_per
 
 def ProcessAndSave(fileNameDate,SavedName,calendar):
-    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         df = labelize(calendar)
         print(f'--- Labelized {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        df.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
-# calendar_per = pd.read_csv("./datasets/altered/calendar_periods.csv")
+# calendar_per = pd.read_csv(f"{DatasetsFolderPath}/altered/calendar_periods.csv")
 # start_time = time.time()
 # labelized = labelize(calendar_per)
 # print("------------ %s seconds ------------" % (time.time() - start_time))
 # print(labelized)
-# labelized.to_csv("./datasets/altered/labelized_calendar_periods.csv")
+# labelized.to_csv(f"{DatasetsFolderPath}/altered/labelized_calendar_periods.csv")
 
 # print(labelized)

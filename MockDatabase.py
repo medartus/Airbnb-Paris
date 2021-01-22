@@ -50,6 +50,3 @@ def InsertOrUpdate(tableName, columns, values):
 
     # Close connection
     conn.close()
-
-# calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
-# InsertOrUpdate("result",DATABASE_CALENDARS_COLUMNS,calendar.values.tolist())

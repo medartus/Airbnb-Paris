@@ -6,6 +6,11 @@ import time
 import os
 from datetime import datetime, timedelta
 import DatabaseConnector
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 # List of columns kept in the database for Calendar dataset
 date_format  = "%Y-%m-%d"
@@ -304,27 +309,27 @@ def UpdateByListingGroup(group):
 
 
 def ProcessAndSave(fileNameDate,SavedName,newCalendar):
-    existsInsert = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv") 
-    existsDelete = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv") 
+    existsInsert = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv") 
+    existsDelete = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv") 
     if existsInsert and existsDelete:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv ---')
-        delete = pd.read_csv(f'./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv',sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv ---')
+        delete = pd.read_csv(f'{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv',sep=",")
         if not delete.empty:
             DatabaseConnector.CalendarDelete(delete['cal_key'].to_list())
             time.sleep(10)
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         insert, delete = Merging(newCalendar)
         print(f'--- Merging {fileNameDate} : {time.time() - start_time} ---')
-        insert.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv", index = False)
-        delete.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv", index = False)
+        insert.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_insert-{fileNameDate}.csv", index = False)
+        delete.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}_delete-{fileNameDate}.csv", index = False)
         return insert
 
 #EXEMPLE of Individual execution of merging
 #start_time = time.time()
-#Merging('./datasets/NameoftheFile')
+#Merging(f'{DatasetsFolderPath}/NameoftheFile')
 #print("---  %s seconds ---" % (time.time() - start_time))
 
 
