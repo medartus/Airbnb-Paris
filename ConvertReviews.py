@@ -4,9 +4,14 @@ import datetime
 import time
 import os
 import Validation
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 def RetrieveFile(filename):
-    df = pd.read_csv('./datasets/'+filename+'.csv',sep=";")
+    df = pd.read_csv(f'{DatasetsFolderPath}/{filename}.csv',sep=";")
     return df
 
 def ProcessLink():
@@ -47,7 +52,7 @@ def GetValidationId():
 
     
 def ProcessReviews(fileNameDate,date):
-    reviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
+    reviews = pd.read_csv(f'{DatasetsFolderPath}/reviews/reviews-{fileNameDate}.csv',sep=",")
     reviews = reviews.drop(['id','reviewer_id','reviewer_name','comments'], axis=1)
     reviews = reviews.rename({"listing_id":"id","date":"date_com"},axis=1)
     reviews['date_com'] =  pd.to_datetime(reviews['date_com'], format='%Y-%m-%d')
@@ -122,19 +127,19 @@ def ValidateWithExternalReviews(fileNameDate,calendar):
     return Validation.validateExternalCalendar(calendar,groupedReviews)
 
 def ProcessAndSave(fileNameDate,SavedName,calendar):
-    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         df = ValidateWithExternalReviews(fileNameDate,calendar)
         print(f'--- External validation {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        df.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 if __name__ == "__main__":
-    calendar = pd.read_csv("./datasets/altered/validated_calendar_periods.csv")
+    calendar = pd.read_csv(f"{DatasetsFolderPath}/altered/validated_calendar_periods.csv")
     start_time = time.time()
     res = ValidateWithExternalReviews(calendar)
     print("------------ %s seconds ------------" % (time.time() - start_time))

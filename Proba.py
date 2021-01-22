@@ -4,6 +4,11 @@ import datetime
 import ImportListing
 import time
 import os
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 """
 This function adjusts the probability of one row based on the validation from Airbnb's reviews.
@@ -74,18 +79,18 @@ def AddingProba(calendar,filename):
 
 
 def ProcessAndSave(fileNameDate,SavedName,calendar):
-    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         df = AddingProba(calendar,fileNameDate)
         print(f'--- Proba {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        df.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
-# calendar = pd.read_csv("./datasets/saved/2017-01/validated_calendar-2017-01.csv")
+# calendar = pd.read_csv(f"{DatasetsFolderPath}/saved/2017-01/validated_calendar-2017-01.csv")
 # start_time = time.time()
 # res = AddingProba(calendar,"2017-01")
 # print("---  %s seconds ---" % (time.time() - start_time))

@@ -4,8 +4,12 @@ from dateutil import relativedelta
 import time
 import os
 from datetime import datetime, timedelta
-
 import DatabaseConnector
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 DATABASE_CALENDARS_COLUMNS = [
     "cal_key",
@@ -159,7 +163,7 @@ Given the calendar, and the review file name, it will sort reviews fields and ru
 '''
 def ValidateWithReviews(filename,date):
     # open files
-    reviews = pd.read_csv("./datasets/reviews/reviews-"+filename+".csv")
+    reviews = pd.read_csv(f"{DatasetsFolderPath}/reviews/reviews-{filename}.csv")
 
     # optimize calendar data to process
     reviews = reviews.drop(columns=['id','reviewer_id','reviewer_name','comments'])
@@ -167,7 +171,7 @@ def ValidateWithReviews(filename,date):
 
     # extract calendars
     fileNameDate =  str(date - relativedelta.relativedelta(months=1))[:7]
-    oldReviews = pd.read_csv(f'./datasets/reviews/reviews-{fileNameDate}.csv',sep=",")
+    oldReviews = pd.read_csv(f'{DatasetsFolderPath}/reviews/reviews-{fileNameDate}.csv',sep=",")
     minDate = datetime.strptime(oldReviews['date'].max(), "%Y-%m-%d")
     
     requestedColumns = DatabaseConnector.FormatInsert(DATABASE_CALENDARS_COLUMNS)
@@ -178,15 +182,15 @@ def ValidateWithReviews(filename,date):
     return validateInternalCalendar(calendar,reviews)
     
 def ProcessAndSave(fileNameDate,SavedName,date):
-    exists = os.path.isfile(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv") 
     if exists:
-        print(f'--- Used ./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
-        return pd.read_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
+        print(f'--- Used {DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv ---')
+        return pd.read_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv",sep=",")
     else:
         start_time = time.time()
         df = ValidateWithReviews(fileNameDate,date)
         print(f'--- Validation {fileNameDate} : {time.time() - start_time} ---')
-        df.to_csv(f"./datasets/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
+        df.to_csv(f"{DatasetsFolderPath}/saved/{fileNameDate}/{SavedName}-{fileNameDate}.csv", index = False)
         return df
 
 if __name__ == "__main__":

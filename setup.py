@@ -15,10 +15,15 @@ import MergeCalendar
 import DatabaseConnector
 import ConvertReviews
 import Proba
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 datasets = ['listings','reviews','calendar']
 
-DATABASE_CALENDARS_COLUMNS = [
+DATAFRAME_CALENDARS_COLUMNS = [
     "listing_id",
     "available",
     "start_date",
@@ -39,7 +44,7 @@ Create folder for saving .csv
 '''
 def CreateFolder(folderName):
     try:
-        os.mkdir(f'./datasets/{folderName}')
+        os.mkdir(f'{DatasetsFolderPath}/{folderName}')
     except:
         pass
 
@@ -50,12 +55,12 @@ def UnzipFiles(date):
         for folderName in datasets:
             if newDate == date or (newDate < date and folderName == "reviews") :
                 fileName = folderName + '-' +fileNameDate
-                with gzip.open('./datasets/'+folderName+'/'+fileName+'.csv.gz', 'rb') as f_in:
-                    with open('./datasets/'+folderName+'/'+fileName+'.csv', 'wb') as f_out:
+                with gzip.open(f'{DatasetsFolderPath}/{folderName}/{fileName}.csv.gz', 'rb') as f_in:
+                    with open(f'{DatasetsFolderPath}/{folderName}/{fileName}.csv', 'wb') as f_out:
                         shutil.copyfileobj(f_in, f_out)
     fileNameDate = str(date)[:7]
-    if os.path.isfile(f'./datasets/saved/{fileNameDate}.zip'):
-        shutil.unpack_archive(f'./datasets/saved/{fileNameDate}.zip', f'./datasets/saved/{fileNameDate}', 'zip')  
+    if os.path.isfile(f'{DatasetsFolderPath}/saved/{fileNameDate}.zip'):
+        shutil.unpack_archive(f'{DatasetsFolderPath}/saved/{fileNameDate}.zip', f'{DatasetsFolderPath}/saved/{fileNameDate}', 'zip')  
     
 def CleanProcess(date):
     for i in range(2):        
@@ -64,10 +69,10 @@ def CleanProcess(date):
         for folderName in datasets:
             if newDate == date or (newDate < date and folderName == "reviews") :
                 fileName = folderName + '-' +fileNameDate
-                os.remove('./datasets/'+folderName+'/'+fileName+'.csv')
+                os.remove(f'{DatasetsFolderPath}/{folderName}/{fileName}.csv')
     fileNameDate = str(date)[:7]
-    shutil.make_archive(f'./datasets/saved/{fileNameDate}', 'zip', f'./datasets/saved/{fileNameDate}')
-    shutil.rmtree(f'./datasets/saved/{fileNameDate}')
+    shutil.make_archive(f'{DatasetsFolderPath}/saved/{fileNameDate}', 'zip', f'{DatasetsFolderPath}/saved/{fileNameDate}')
+    shutil.rmtree(f'{DatasetsFolderPath}/saved/{fileNameDate}')
 
 
 '''
@@ -94,7 +99,7 @@ def ProcessDatasets(date):
     labelizedCalendar = LabelizePeriods.ProcessAndSave(fileNameDate,'labelized_calendar',mergedCalendar)
     probaCalendar = Proba.ProcessAndSave(fileNameDate,'probalized_calendar',labelizedCalendar)
     probaCalendar['cal_key'] = probaCalendar['listing_id'].astype(str) + '_' + probaCalendar['start_date'].astype(str)
-    DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATABASE_CALENDARS_COLUMNS)
+    DatabaseConnector.Insert(probaCalendar.values.tolist(),'calendars',DATAFRAME_CALENDARS_COLUMNS)
     print('------- End of calendar process -------')
     print("------------ %s seconds ------------" % (time.time() - start_time))
 
@@ -138,7 +143,7 @@ def ProcessDateRange(startDate,endDate):
 
 
 if __name__ == "__main__":
-    ProcessDateRange('2017-04-01','2017-06-01')
+    ProcessDateRange('2017-05-01','2017-06-01')
 
     # period = "2017-02" 
     # date = datetime.strptime(period, "%Y-%m")

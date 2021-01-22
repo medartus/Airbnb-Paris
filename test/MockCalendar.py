@@ -971,7 +971,7 @@ def Mock33():
     to_delete = [11158455]
     return CreateMock(new, old, to_insert, to_delete)
 
-def Mock34():
+"""def Mock34():
     old = [
         [16582561,16582560, "f", "2017-02-06", "2017-02-13", 8 , 0, 1125, "L14"],
         [16582562,16582560, "t", "2017-02-14", "2017-02-23", 10, 0, 1125, "A"],
@@ -989,4 +989,4 @@ def Mock34():
         [249304,'f','2017-01-16','2018-02-07',387,0,1125,'M21']
     ]
     to_delete = [121]
-    return CreateMock(new, old, to_insert, to_delete)
+    return CreateMock(new, old, to_insert, to_delete)"""

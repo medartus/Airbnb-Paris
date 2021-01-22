@@ -11,6 +11,7 @@ POSTGRESQL_HOST=
 POSTGRESQL_USER=
 POSTGRESQL_PASSWORD=
 POSTGRESQL_DATABASE=
+DATASETS_FOLDER_PATH=
 ```
 
 To access and visualize the database, you can use [pgAdmin](https://www.pgadmin.org/download/).

@@ -5,6 +5,11 @@ import urllib
 import datetime
 import urllib.request
 from dateutil import relativedelta
+from dotenv import load_dotenv
+
+load_dotenv('./dev.env')
+
+DatasetsFolderPath = os.getenv("DATASETS_FOLDER_PATTH")
 
 datasets = ['listings','reviews','calendar']
 
@@ -14,7 +19,7 @@ Verify if a file exists in a specific folder
 def VerifyDatasetExists(datesetType,date):
     fileNameDate = str(date)[:7]
     fileName = datesetType+"-"+fileNameDate
-    exists = os.path.isfile("./datasets/"+datesetType+"/"+fileName+".csv.gz") 
+    exists = os.path.isfile(f"{DatasetsFolderPath}/{datesetType}/{fileName}.csv.gz") 
     if exists:
         print(f'------ {fileName} already exists ------')
     return exists
@@ -36,7 +41,7 @@ def DownloadFile(date,folderName):
     fileName = folderName+'-'+str(date)[:7]
 
     try:
-        urllib.request.urlretrieve (url, "./datasets/"+folderName+"/"+fileName+".csv.gz")
+        urllib.request.urlretrieve (url, f"{DatasetsFolderPath}/{folderName}/{fileName}.csv.gz")
         return True
     except:
         return False
@@ -69,7 +74,7 @@ Create the dataset folder if doesn't exists
 def CreateFolder():
     for fileName in datasets:
         try:
-            os.mkdir('./datasets/'+fileName)
+            os.mkdir(f'{DatasetsFolderPath}/{fileName}')
         except:
             pass
 

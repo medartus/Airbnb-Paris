@@ -12,3 +12,8 @@ assets/
 .pytest_cache/
 rendu/
 plop.py
+.idea/
+.idea/*
+notebook/
+venv/
+__pycache__/
